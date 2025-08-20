@@ -25,7 +25,7 @@ class Effect:
     def run_effect(self):
         print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
         if self.duration:
-            Effect.running_effects.append(self.id)
+            Effect.running_effects.append(self.effect_name)
             ...
             #do duration shid
 
