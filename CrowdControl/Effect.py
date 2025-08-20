@@ -34,5 +34,10 @@ class Effect:
         NotifyEffect(self.thread, self.id, "Finished", self.effect_name)
 
     def on_map_change(self):
+        #runs as soon as the loading screen finishes
+        pass
+
+    def map_change_finalized(self):
+        #runs once the player can see
         pass
         
