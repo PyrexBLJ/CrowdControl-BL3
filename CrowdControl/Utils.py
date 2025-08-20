@@ -1,7 +1,7 @@
-import unrealsdk
-from mods_base import get_pc, ENGINE, make_struct, find_object, find_class
-from unrealsdk.unreal import UObject, WrappedStruct
 
+from mods_base import get_pc, ENGINE
+from unrealsdk import find_object, make_struct, find_class
+from unrealsdk.unreal import UObject
 
 
 
