@@ -9,8 +9,9 @@ from unrealsdk.hooks import Type
 from typing import Any
 import random
 from .comms import RequestEffect, NotifyEffect
-from .Effect import *
 from .Utils import AmIHost
+from .Effect import *
+from .OneHealth import *
 
 __all__ = ["Load", "RequestEffect", "NotifyEffect", "Internal"]
 
