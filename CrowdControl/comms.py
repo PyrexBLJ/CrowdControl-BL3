@@ -61,22 +61,21 @@ def RequestEffect(thread, eid, effect_name, *args):
         NotifyEffect(thread, eid, "Unavailable", effect_name)
         return
     
-    effect_inst = effect_cls()
-    effect_inst.id = eid
-    effect_inst.args = list(args)
-    effect_inst.thread = thread
+    effect_cls.id = eid
+    effect_cls.args = list(args)
+    effect_cls.thread = thread
 
     try:
-        effect_inst.duration = int(args[0]) if args else 0
+        effect_cls.duration = int(args[0]) if args else 0
     except ValueError:
-        effect_inst.duration = 0
+        effect_cls.duration = 0
 
     effects.add(eid)
 
-    effect_inst.run_effect()
+    effect_cls.run_effect()
 
-    if effect_inst.duration > 0:
-        NotifyEffect(thread, eid, "Started", effect_name, effect_inst.duration)
-        threading.Timer(effect_inst.duration, effect_inst.stop_effect, args=(effect_inst,)).start()
+    if effect_cls.duration > 0:
+        NotifyEffect(thread, eid, "Started", effect_name, effect_cls.duration)
+        threading.Timer(effect_cls.duration, effect_cls.stop_effect, args=(effect_cls,)).start()
     else:
         NotifyEffect(thread, eid, "Finished", effect_name)
