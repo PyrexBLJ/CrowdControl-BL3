@@ -12,7 +12,7 @@ class Effect:
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        Effect.registry[cls.effect_name] = cls()#type:ignore
+        Effect.registry[cls.effect_name] = cls#type:ignore
     
     def __init__(self) -> None:
         self.id: int
