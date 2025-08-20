@@ -13,6 +13,9 @@ from .Utils import AmIHost
 from .Effect import *
 from .OneHealth import *
 from .YetiEffects import *
+from .PyrexEffects import *
+from .GarwoodEffects import *
+from .EpicEffects import *
 
 __all__ = ["Load", "RequestEffect", "NotifyEffect", "Internal"]
 

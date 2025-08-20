@@ -1,6 +1,3 @@
-from mods_base import get_pc, SliderOption
-from unrealsdk import find_object,find_class,load_package,make_struct
-from unrealsdk.unreal import UObject 
 from random import randint, Random
 import time
 from .comms import NotifyEffect
@@ -21,6 +18,7 @@ class Effect:
         self.args:list = []
         self.is_running:bool = False
         self.thread = None
+        self.pc = None
 
     def run_effect(self):
         print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
@@ -33,7 +31,7 @@ class Effect:
     def stop_effect(self):
         self.is_running = False
         Effect.running_effects.remove(self.effect_name)
-        NotifyEffect(self.thread, self.id, "Finished", self.effect_name)
+        NotifyEffect(self.thread, self.id, "Finished", self.effect_name, self.pc)
 
     def on_map_change(self):
         #runs as soon as the loading screen finishes
@@ -42,4 +40,3 @@ class Effect:
     def map_change_finalized(self):
         #runs once the player can see
         pass
-        
