@@ -178,6 +178,6 @@ def CrowdControlLoadedMap(obj: UObject,args: WrappedStruct,ret: Any,func: BoundF
     
     for inst in Effect.registry.values():
         if inst.is_running:
-            inst.on_map_load()
+            inst.on_map_change()
 
 build_mod(on_enable=Enable, on_disable=Disable)
