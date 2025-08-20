@@ -4,8 +4,8 @@ from unrealsdk.unreal import UObject
 
 
 def InFrontOfPlayer(player: UObject) -> UObject:
-    x = player.Pawn.K2_GetActorLocation().X + (player.GetActorForwardVector().X * 200) + random.randint(-10, 10)
-    y = player.Pawn.K2_GetActorLocation().Y + (player.GetActorForwardVector().Y * 200) + random.randint(-10, 10)
+    x = player.Pawn.K2_GetActorLocation().X + (player.GetActorForwardVector().X * 200)
+    y = player.Pawn.K2_GetActorLocation().Y + (player.GetActorForwardVector().Y * 200)
     loc = unrealsdk.make_struct("Vector", X=x, Y=y, Z=player.Pawn.K2_GetActorLocation().Z)
     return loc
 

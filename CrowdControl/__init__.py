@@ -3,9 +3,14 @@ import time
 import threading
 import json
 import unrealsdk
-from mods_base import build_mod
+from mods_base import build_mod, hook
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+from unrealsdk.hooks import Type
+from typing import Any
+import random
 from .comms import RequestEffect, NotifyEffect
 from .Effect import *
+from .Utils import AmIHost
 
 __all__ = ["Load", "RequestEffect", "NotifyEffect", "Internal"]
 
@@ -113,6 +118,54 @@ def Disable() -> None:
     if client != None:
         client.shutdown()
         client = None
+    return None
+
+@hook("/Script/Engine.PlayerController:ServerChangeName", Type.PRE)
+def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+#
+#   This is where requests for effects will arrive to the host from the other clients in the game.
+#   
+#   We will have to make sure each request sent to the host contains the string CrowdControl in it, the clients PlayerID from their playerstate, the effect they want to be activated on them,
+#   and probably the request id they got from the cc app so we can send it back to them with the status of the effect and their game can report it back to the cc app.
+#
+#   all of these should be separated by a character that wont be found in any of that data naturally (im guessing with - it might change later if it has to) and presented in the same order so we can easily break it out into what we need
+#
+#   something like CrowdControl-{PlayerID}-{Effect}-{RequestID}
+#
+#   you can see an example of this being called in the OneHealth effect
+#
+    if "CrowdControl" in args.S:
+        request: list = args.S.split("-")
+
+        if str(get_pc().PlayerState.PlayerID) == request[1]:
+            #print("Got a client request from ourself, this really shouldnt happen.")
+            return None
+        
+        if request[2] == "example_effect":
+            # do the effect stuff
+
+            #now we have to tell the client what we did, obj will be the clients player controller
+            obj.ClientMessage(f"{request[3]}-{request[2]}-(Status)", "CrowdControl", float(request[1]))
+
+
+    return None
+
+@hook("/Script/Engine.PlayerController:ClientMessage", Type.PRE)
+def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+#
+#   This is where players will get responses from the host
+#
+#   As im writing this i dont think we will really much more than this, def will have to handle timed events somehow but im not sure yet
+#
+    global thread
+    if args.type == "CrowdControl":
+        if args.MsgLifeTime != float(get_pc().PlayerState.PlayerID) or AmIHost():
+            return None
+        
+        response: list = args.S.split("-")
+
+        NotifyEffect(thread, response[0], response[2], response[1]) #ngl idk the best way to deal with timeremaining yet
+
     return None
 
 build_mod(on_enable=Enable, on_disable=Disable)
