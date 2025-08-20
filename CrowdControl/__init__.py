@@ -12,6 +12,7 @@ from .comms import RequestEffect, NotifyEffect
 from .Utils import AmIHost
 from .Effect import *
 from .OneHealth import *
+from .SharedEffects import *
 from .YetiEffects import *
 from .PyrexEffects import *
 from .GarwoodEffects import *
