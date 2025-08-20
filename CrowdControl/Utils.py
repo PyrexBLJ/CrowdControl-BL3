@@ -1,6 +1,8 @@
 import unrealsdk
-from mods_base import get_pc, ENGINE
-from unrealsdk.unreal import UObject
+from mods_base import get_pc, ENGINE, make_struct, find_object, find_class
+from unrealsdk.unreal import UObject, WrappedStruct
+
+
 
 
 def InFrontOfPlayer(player: UObject) -> UObject:
@@ -22,3 +24,20 @@ def GetPlayerCharacter(player: UObject) -> UObject:
         return player.OakCharacter.Gunner
     else:
         return player.OakCharacter
+    
+
+LootPools = {
+    "Legendary Weapon": '/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary',
+}
+
+oak_blueprint_library = find_class("OakBlueprintLibrary").ClassDefaultObject
+
+def SpawnLoot(ItemPoolName:str, Pawn:UObject):
+    ItemPoolData = find_object("ItemPoolData", LootPools[ItemPoolName])
+
+    PickupRequest = make_struct("SpawnDroppedPickupLootRequest",
+                        ContextActor=Pawn,
+                        ItemPools=ItemPoolData,
+                        )
+    
+    oak_blueprint_library.SpawnLootAsync(Pawn, PickupRequest)

@@ -37,19 +37,3 @@ class OopsAllPsychos(Effect):
         return super().map_change_finalized()
     
     
-
-oak_blueprint_library = find_class("OakBlueprintLibrary").ClassDefaultObject
-
-class SpawnLegendary(Effect):
-    effect_name = "Spawn Legendary Weapon"
-    pawn = None
-    def run_effect(self):
-        if not self.pawn:
-            pawn = get_pc().Pawn
-        all_weapons = find_object('ItemPoolData','/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary')
-        spawn_loot_struct = make_struct("SpawnDroppedPickupLootRequest",
-                                ContextActor=pawn,
-                                ItemPools=all_weapons,
-                                )
-        oak_blueprint_library.SpawnLootAsync(pawn, spawn_loot_struct)
-        return super().run_effect()
