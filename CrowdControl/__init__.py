@@ -79,13 +79,13 @@ class AppSocketThread(threading.Thread):
                             if duration:
                                 duration /= 1000
                             if duration and parameters:
-                                RequestEffect(thread, eid, effect, duration, *parameters)
+                                RequestEffect(thread, eid, effect, get_pc(), duration, *parameters)
                             elif parameters:
-                                RequestEffect(thread, eid, effect, *parameters)
+                                RequestEffect(thread, eid, effect, get_pc(), *parameters)
                             elif duration:
-                                RequestEffect(thread, eid, effect, duration)
+                                RequestEffect(thread, eid, effect, get_pc(), duration)
                             else:
-                                RequestEffect(thread, eid, effect)
+                                RequestEffect(thread, eid, effect, get_pc())
             except ConnectionResetError:
                 print("Connection Reset")
                 pass
@@ -131,10 +131,11 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
 #
 #   all of these should be separated by a character that wont be found in any of that data naturally (im guessing with - it might change later if it has to) and presented in the same order so we can easily break it out into what we need
 #
-#   something like CrowdControl-{PlayerID}-{Effect}-{RequestID}
+#   something like CrowdControl-{PlayerID}-{Effect}-{RequestID}-{args}-{timeremaining}
 #
 #   you can see an example of this being called in the OneHealth effect
 #
+    global thread
     if "CrowdControl" in args.S:
         request: list = args.S.split("-")
 
@@ -142,11 +143,16 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
             #print("Got a client request from ourself, this really shouldnt happen.")
             return None
         
-        if request[2] == "example_effect":
+        if request[4] != "None": # request[4] are the args
+            RequestEffect(thread, request[3], request[2], obj, request[4])
+        else:
+            RequestEffect(thread, request[3], request[2], obj)
+
+        #if request[2] == "example_effect":
             # do the effect stuff
 
             #now we have to tell the client what we did, obj will be the clients player controller
-            obj.ClientMessage(f"{request[3]}-{request[2]}-(Status)", "CrowdControl", float(request[1]))
+            #obj.ClientMessage(f"{request[3]}-{request[2]}-(Status)", "CrowdControl", float(request[1]))
 
 
     return None

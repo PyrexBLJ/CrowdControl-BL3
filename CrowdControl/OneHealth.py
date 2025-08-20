@@ -10,9 +10,9 @@ class SetOneHP(Effect):
     effect_name = "1_health"
     def run_effect(self):
         if AmIHost(): # if we are host just do the effect normally, otherwise we have to ask the host to do it for us
-            GetPlayerCharacter(get_pc()).OakDamageComponent.SetCurrentShield(0)
-            GetPlayerCharacter(get_pc()).OakDamageComponent.SetCurrentHealth(1)
-            show_hud_message("Hunt 'Rewards'", "Dont die", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentShield(0)
+            GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(1)
+            self.pc.DisplayRolloutNotification("Crowd Control", "Dont die", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         else:
             get_pc().ServerChangeName(f"CrowdControl-{get_pc().PlayerState.PlayerID}-1_health-{self.id}")
         return super().run_effect()

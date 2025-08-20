@@ -1,5 +1,6 @@
 import json
 import threading
+from mods_base import get_pc
 
 
 effects = set()
@@ -13,7 +14,10 @@ def getReponseType(status: str) -> int:
     except ValueError:
         return bytes(1) # return a failure when status isnt known
 
-def NotifyEffect(thread, eid, status=None, code=None, timeRemaining=None):
+def NotifyEffect(thread, eid, status=None, code=None, pc=None, timeRemaining=None):
+    if pc != get_pc():
+        pc.ClientMessage(f"{eid}-{code}-{status}", "CrowdControl", float(pc.PlayerState.PlayerID))
+        return
     if status is None:
         status = "Success"
     if eid in effects:
@@ -51,7 +55,7 @@ def NotifyEffect(thread, eid, status=None, code=None, timeRemaining=None):
         print("ConnectionAbortedError")
         pass
 
-def RequestEffect(thread, eid, effect_name, *args):
+def RequestEffect(thread, eid, effect_name, pc, *args):
     print(f"CrowdControl: Requesting effect {effect_name} with ID {eid}")
 
     from .Effect import Effect
@@ -64,6 +68,7 @@ def RequestEffect(thread, eid, effect_name, *args):
     effect_cls.id = eid
     effect_cls.args = list(args)
     effect_cls.thread = thread
+    effect_cls.pc = pc
 
     try:
         effect_cls.duration = int(args[0]) if args else 0
@@ -75,7 +80,7 @@ def RequestEffect(thread, eid, effect_name, *args):
     effect_cls.run_effect()
 
     if effect_cls.duration > 0:
-        NotifyEffect(thread, eid, "Started", effect_name, effect_cls.duration)
+        NotifyEffect(thread, eid, "Started", effect_name, pc, effect_cls.duration)
         threading.Timer(effect_cls.duration, effect_cls.stop_effect, args=(effect_cls,)).start()
     else:
-        NotifyEffect(thread, eid, "Finished", effect_name)
+        NotifyEffect(thread, eid, "Finished", effect_name, pc)
