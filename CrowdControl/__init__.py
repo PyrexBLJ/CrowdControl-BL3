@@ -12,6 +12,7 @@ from .comms import RequestEffect, NotifyEffect
 from .Utils import AmIHost
 from .Effect import *
 from .OneHealth import *
+from .YetiEffects import *
 
 __all__ = ["Load", "RequestEffect", "NotifyEffect", "Internal"]
 
