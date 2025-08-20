@@ -81,6 +81,6 @@ def RequestEffect(thread, eid, effect_name, pc, *args):
 
     if effect_cls.duration > 0:
         NotifyEffect(thread, eid, "Started", effect_name, pc, effect_cls.duration)
-        threading.Timer(effect_cls.duration, effect_cls.stop_effect, args=(effect_cls,)).start()
+        threading.Timer(effect_cls.duration, effect_cls.stop_effect).start()
     else:
         NotifyEffect(thread, eid, "Finished", effect_name, pc)

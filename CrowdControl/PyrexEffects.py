@@ -1,7 +1,5 @@
 from .Effect import Effect
 from .Utils import GetPlayerCharacter
-import unrealsdk
-from mods_base import get_pc
 
 
 class NoGravity(Effect):
