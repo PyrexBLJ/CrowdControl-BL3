@@ -168,4 +168,15 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
 
     return None
 
+
+@hook("/Script/Engine.PlayerController:ServerNotifyLoadedWorld", Type.POST)
+def CrowdControlLoadedMap(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
+    NewMap = str(args.WorldPackageName)
+    if "loader" in NewMap.lower() or "fakeentry" in NewMap.lower():
+        return
+    
+    for inst in Effect.registry.values():
+        if inst.is_running:
+            inst.on_map_load()
+
 build_mod(on_enable=Enable, on_disable=Disable)
