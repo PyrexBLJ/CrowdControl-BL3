@@ -23,7 +23,7 @@ def NotifyEffect(thread, eid, status=None, code=None, pc=None, timeRemaining=Non
     if eid in effects:
         effects.remove(eid)
     
-    message = {"id":eid, "status":status, "code":code, "type":0}
+    message = {"id":eid, "status":status, "code":code}
     
     if timeRemaining is None:
         print(f"CrowdControl: Responding with {status} for effect with ID {eid}")
@@ -32,6 +32,8 @@ def NotifyEffect(thread, eid, status=None, code=None, pc=None, timeRemaining=Non
         if eid not in timed:
             timed.add(eid)
         message["timeRemaining"] = timeRemaining
+
+    message["type"] = 0
         
     if status == "Finished":
         if eid in timed:
@@ -54,6 +56,7 @@ def NotifyEffect(thread, eid, status=None, code=None, pc=None, timeRemaining=Non
     except ConnectionAbortedError:
         print("ConnectionAbortedError")
         pass
+
 
 def RequestEffect(thread, eid, effect_name, pc, *args):
     
@@ -90,7 +93,7 @@ def RequestEffect(thread, eid, effect_name, pc, *args):
     effect_cls.run_effect()
 
     if effect_cls.duration > 0:
-        NotifyEffect(thread, eid, "Started", effect_name, pc, effect_cls.duration)
+        NotifyEffect(thread, eid, "Started", effect_name, pc, (effect_cls.duration * 1000))
         threading.Timer(effect_cls.duration, effect_cls.stop_effect).start()
     else:
         NotifyEffect(thread, eid, "Finished", effect_name, pc)
