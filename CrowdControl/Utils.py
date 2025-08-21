@@ -3,6 +3,14 @@ from mods_base import get_pc, ENGINE
 from unrealsdk import find_object, make_struct, find_class
 from unrealsdk.unreal import UObject
 
+blacklist_teams = [
+    "NonPlayers",
+    "Players",
+    "Team_Ghost",
+    "Friendly to All",
+    "Team_Neutral",
+]
+
 
 
 def InFrontOfPlayer(player: UObject) -> UObject:

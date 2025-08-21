@@ -1,15 +1,9 @@
 from .Effect import Effect
-from unrealsdk import find_object, make_struct, find_all, find_class #type:ignore
-from mods_base import get_pc
-
-
-blacklist_teams = [
-    "NonPlayers",
-    "Players",
-    "Team_Ghost",
-    "Friendly to All",
-    "Team_Neutral",
-]
+from typing import Any
+from unrealsdk import find_object, make_struct, find_all
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
+from unrealsdk.hooks import Type, add_hook, remove_hook 
+from .Utils import blacklist_teams
 
 
 class OopsAllPsychos(Effect):
@@ -27,13 +21,18 @@ class OopsAllPsychos(Effect):
                 factory.SetSpawnOptions(psychos)
 
 
+    def oops_psychos_dim(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
+        self.set_spawns()
+
+
     def run_effect(self):
         self.set_spawns()
         return super().run_effect()
     
-    def map_change_finalized(self):
-        print("oops psychos map change")
-        self.set_spawns()
-        return super().map_change_finalized()
-    
-    
+    def on_map_change(self):
+        add_hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.PRE, "oops_psychos_dim", self.oops_psychos_dim)
+        return super().on_map_change()
+
+    def stop_effect(self):
+        remove_hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.PRE, "oops_psychos_dim")
+        return super().stop_effect()
