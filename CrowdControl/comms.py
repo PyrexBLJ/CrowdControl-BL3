@@ -56,8 +56,15 @@ def NotifyEffect(thread, eid, status=None, code=None, pc=None, timeRemaining=Non
         pass
 
 def RequestEffect(thread, eid, effect_name, pc, *args):
+    
+    spawnloot_args = []
+    if 'spawnloot' in effect_name:
+        split_name = effect_name.split("_")
+        spawnloot_args.append(split_name[1])
+        spawnloot_args.append(split_name[2])
+        effect_name = 'spawnloot'
+        
     print(f"CrowdControl: Requesting effect {effect_name} with ID {eid}")
-
     from .Effect import Effect
     effect_cls = Effect.registry.get(effect_name)
     if not effect_cls:
@@ -69,6 +76,9 @@ def RequestEffect(thread, eid, effect_name, pc, *args):
     effect_cls.args = list(args)
     effect_cls.thread = thread
     effect_cls.pc = pc
+
+    for arg in spawnloot_args:
+        effect_cls.args.append(arg)
 
     try:
         effect_cls.duration = int(args[0]) if args else 0

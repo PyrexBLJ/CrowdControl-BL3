@@ -27,12 +27,12 @@ def GetPlayerCharacter(player: UObject) -> UObject:
     
 
 LootPools = {
-    "Legendary Weapon": '/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary',
+    "legedaryweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary", #quantiy:1
 }
-
 oak_blueprint_library = find_class("OakBlueprintLibrary").ClassDefaultObject
 
-def SpawnLoot(ItemPoolName:str, Pawn:UObject):
+def SpawnLoot(ItemPoolName:str, Quantity:int, Pawn:UObject):
+
     ItemPoolData = find_object("ItemPoolData", LootPools[ItemPoolName])
 
     PickupRequest = make_struct("SpawnDroppedPickupLootRequest",
@@ -40,4 +40,5 @@ def SpawnLoot(ItemPoolName:str, Pawn:UObject):
                         ItemPools=ItemPoolData,
                         )
     
-    oak_blueprint_library.SpawnLootAsync(Pawn, PickupRequest)
+    for i in range(Quantity): 
+        oak_blueprint_library.SpawnLootAsync(Pawn, PickupRequest)

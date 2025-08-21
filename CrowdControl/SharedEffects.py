@@ -7,15 +7,15 @@ from .Utils import SpawnLoot
 
 class SpawnLootEffect(Effect):
     """
-    to add to this effect, add your loot pool to the dict in Utils with a front facing name as the key
+    to add to this effect, add your loot pool to the dict in Utils and make a note on how many should spawn
     """
-    effect_name = "Spawn Loot"
+    effect_name = "spawnloot"
+
     def run_effect(self):
         if not self.pc:
             pawn = get_pc().Pawn
         else:
             pawn = self.pc.Pawn
 
-        SpawnLoot(self.args[0],pawn)
-        
+        SpawnLoot(self.args[0], int(self.args[1]), pawn)
         return super().run_effect()

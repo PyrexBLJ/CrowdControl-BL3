@@ -13,7 +13,7 @@ blacklist_teams = [
 
 
 class OopsAllPsychos(Effect):
-    effect_name = "Oops All Psychos"
+    effect_name = "oops_all_psychos"
     def set_spawns(self):
         no_spawn = make_struct("GameplayTag",TagName="None")
         for point in find_all("SpawnPoint",False):
