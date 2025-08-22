@@ -1,5 +1,6 @@
 import json
 import threading
+import time
 from mods_base import get_pc
 
 
@@ -94,6 +95,7 @@ def RequestEffect(thread, eid, effect_name, pc, *args):
 
     if effect_cls.duration > 0:
         NotifyEffect(thread, eid, "Started", effect_name, pc, (effect_cls.duration * 1000))
-        threading.Timer(effect_cls.duration, effect_cls.stop_effect).start()
+        effect_cls.start_time = time.time()
+        #threading.Timer(effect_cls.duration, effect_cls.stop_effect).start()
     else:
         NotifyEffect(thread, eid, "Finished", effect_name, pc)

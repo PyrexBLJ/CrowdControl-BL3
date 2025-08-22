@@ -202,4 +202,12 @@ def CrowdControlFinishedDim(obj: UObject,args: WrappedStruct,ret: Any,func: Boun
     CrowdControlFinishedDim.disable()
 
 
+@hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE)
+def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
+    for inst in Effect.registry.values():
+        if inst.is_running and inst.duration > 0:
+            if (inst.start_time + inst.duration) <= time.time():
+                inst.stop_effect()
+
+
 build_mod(on_enable=Enable, on_disable=Disable)

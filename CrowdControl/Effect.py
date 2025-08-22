@@ -19,6 +19,7 @@ class Effect:
         self.is_running:bool = False
         self.thread = None
         self.pc = None
+        self.start_time = None
 
     def run_effect(self):
         print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
