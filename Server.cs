@@ -26,5 +26,10 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Barrel Troll", "barrel_troll"),
         new("No Gravity", "no_gravity") { Duration = 30 },
         new("No Ammo", "no_ammo"),
+        new("Oops All Psychos", "oops_all_psychos") { Duration =  300 },
+        new("Spawn Legendary Weapon", "spawnloot_legendaryweapon_1") { Category = new EffectGrouping("Spawn Loot") },
+        new("Launch Player", "launch_player"),
+        new("Clutter Backpack", "clutter_inventory"),
+        new("Meet Lilith on the Bridge", "report_to_lilith") { Duration = 30 },
     };
 }
