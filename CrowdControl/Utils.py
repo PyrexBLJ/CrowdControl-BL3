@@ -35,7 +35,7 @@ def GetPlayerCharacter(player: UObject) -> UObject:
     
 
 LootPools = {
-    "legedaryweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary", #quantiy:1
+    "legendaryweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary", #quantiy:1
 }
 oak_blueprint_library = find_class("OakBlueprintLibrary").ClassDefaultObject
 

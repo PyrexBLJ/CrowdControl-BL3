@@ -1,9 +1,9 @@
 from .Effect import Effect
 from typing import Any
-from unrealsdk import find_object, make_struct, find_all
+from unrealsdk import find_object, make_struct, find_all, find_class
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook 
-from .Utils import blacklist_teams
+from .Utils import blacklist_teams,oak_blueprint_library
 
 
 class OopsAllPsychos(Effect):
@@ -36,3 +36,43 @@ class OopsAllPsychos(Effect):
     def stop_effect(self):
         remove_hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.PRE, "oops_psychos_dim")
         return super().stop_effect()
+    
+#r.TextureStreaming.PoolSize
+#r.ScreenPercentage
+
+class LaunchPlayer(Effect):
+    effect_name = "launch_player"
+    def run_effect(self):
+        CurrentVel = self.pc.Pawn.OakCharacterMovement.Velocity
+        CurrentVel.Z += 10000
+        self.pc.Pawn.LaunchPawn(CurrentVel, True, True)
+        return super().run_effect()
+    
+
+class ClutterInventory(Effect):
+    effect_name = "clutter_inventory"
+
+    def run_effect(self):
+        ItemPoolData = find_object("ItemPoolData", "/Game/GameData/Loot/ItemPools/Guns/ItemPool_TrialsChests.ItemPool_TrialsChests")
+            
+        init = find_class("Init_RandomLootCount_LotsAndLots_C")
+
+        for i in range(25):
+            oak_blueprint_library.GiveRewardItem(self.pc.Pawn,self.pc.Pawn,ItemPoolData,init)
+        return super().run_effect()
+    
+
+class ReportToLilith(Effect):
+    effect_name = "report_to_lilith"
+
+    def run_effect(self):
+        Station = find_object('FastTravelStationData','/Game/GameData/FastTravel/FTS_Sanctuary.FTS_Sanctuary')
+        FastTravel = find_class("FastTravelStationComponent").ClassDefaultObject
+        FastTravel.FastTravelToStation(self.pc.Pawn, Station, self.pc.Pawn)
+        return super().run_effect()
+    
+    def map_change_finalized(self):
+        loc = make_struct("Vector",X= 14727.2,Y=-7662.9,Z=-4.88)
+        rot = make_struct("Rotator",Yaw=-45.9)
+        self.pc.Pawn.K2_TeleportTo(loc,rot)
+        return super().map_change_finalized()
