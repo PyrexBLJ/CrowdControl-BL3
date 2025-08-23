@@ -1,8 +1,9 @@
 
-from mods_base import get_pc, ENGINE
+from mods_base import get_pc, ENGINE, hook
 from unrealsdk import find_object, make_struct, find_class
-from unrealsdk.unreal import UObject
-
+from unrealsdk.unreal import UObject, BoundFunction, UObject, WrappedStruct,WeakPointer
+from unrealsdk.hooks import Type
+from typing import Any
 blacklist_teams = [
     "NonPlayers",
     "Players",
@@ -16,7 +17,7 @@ blacklist_teams = [
 def InFrontOfPlayer(player: UObject) -> UObject:
     x = player.Pawn.K2_GetActorLocation().X + (player.GetActorForwardVector().X * 200)
     y = player.Pawn.K2_GetActorLocation().Y + (player.GetActorForwardVector().Y * 200)
-    loc = unrealsdk.make_struct("Vector", X=x, Y=y, Z=player.Pawn.K2_GetActorLocation().Z)
+    loc = make_struct("Vector", X=x, Y=y, Z=player.Pawn.K2_GetActorLocation().Z)
     return loc
 
 def AmIHost() -> bool:
@@ -50,3 +51,34 @@ def SpawnLoot(ItemPoolName:str, Quantity:int, Pawn:UObject):
     
     for i in range(Quantity): 
         oak_blueprint_library.SpawnLootAsync(Pawn, PickupRequest)
+
+
+PawnList = []
+
+def GetPawnList(bIncludePlayers = True):
+    if bIncludePlayers:
+        return [Pawn() for Pawn in PawnList if Pawn()]
+    else:
+        return [Pawn() for Pawn in PawnList if Pawn() and not Pawn().IsPlayerControlled()]
+ 
+    
+@hook("/Script/Engine.Pawn:ReceivePossessed", Type.POST)
+def CrowdControl_PawnList_Possessed(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
+    PawnList.append(WeakPointer(obj))
+    return
+
+
+@hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE)
+def CrowdControl_PawnList_Unpossessed(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
+    global PawnList
+    PawnsToRemove = []
+    for Pawn in PawnList:
+        if not Pawn():
+            PawnsToRemove.append(Pawn)
+            continue
+
+        if Pawn() == obj:
+            PawnsToRemove.append(Pawn)
+    
+    PawnList = [Pawn for Pawn in PawnList if Pawn not in PawnsToRemove and Pawn()]
+    return

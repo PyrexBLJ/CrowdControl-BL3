@@ -3,8 +3,8 @@ from typing import Any
 from unrealsdk import find_object, make_struct, find_all, find_class
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook 
-from .Utils import blacklist_teams,oak_blueprint_library
-
+from .Utils import blacklist_teams,oak_blueprint_library,GetPawnList
+import random
 
 class OopsAllPsychos(Effect):
     effect_name = "oops_all_psychos"
@@ -76,3 +76,15 @@ class ReportToLilith(Effect):
         rot = make_struct("Rotator",Yaw=-45.9)
         self.pc.Pawn.K2_TeleportTo(loc,rot)
         return super().map_change_finalized()
+    
+class SillyScales(Effect):
+    effect_name = "silly_scales"
+
+    def GetRandomizedScale(self) -> WrappedStruct:
+        RandomScale = random.uniform(0.1, 2.5)
+        return make_struct("Vector", X=RandomScale,Y=RandomScale,Z=RandomScale)
+
+    def run_effect(self):
+        for Pawn in GetPawnList():
+            Pawn.SetActorScale3D(self.GetRandomizedScale())
+        return super().run_effect()

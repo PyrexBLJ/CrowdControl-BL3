@@ -9,7 +9,7 @@ from unrealsdk.hooks import Type
 from typing import Any
 import random
 from .comms import RequestEffect, NotifyEffect
-from .Utils import AmIHost
+from .Utils import AmIHost, CrowdControl_PawnList_Possessed, CrowdControl_PawnList_Unpossessed
 from .Effect import *
 from .OneHealth import *
 from .SharedEffects import *
