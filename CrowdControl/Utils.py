@@ -79,6 +79,7 @@ def CrowdControl_PawnList_Unpossessed(obj: UObject,args: WrappedStruct,ret: Any,
 
         if Pawn() == obj:
             PawnsToRemove.append(Pawn)
+            break
     
     PawnList = [Pawn for Pawn in PawnList if Pawn not in PawnsToRemove and Pawn()]
     return
