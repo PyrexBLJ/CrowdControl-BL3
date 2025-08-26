@@ -32,5 +32,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Clutter Backpack", "clutter_inventory"),
         new("Meet Lilith on the Bridge", "report_to_lilith") { Duration = 30 },
         new("Silly Scales", "silly_scales"),
+        new("Spawn Loot Tink", "spawnenemy_loottink_1"),
+
     };
 }

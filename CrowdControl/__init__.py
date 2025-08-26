@@ -173,11 +173,18 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
 
 
 def RequestEffect(eid, effect_name, pc, *args):
-    spawnloot_args = []
+    extra_args = []
+    
     if "spawnloot" in effect_name:
         split_name = effect_name.split("_")
-        spawnloot_args.extend(split_name[1:3])
+        extra_args.extend(split_name[1:3])
         effect_name = "spawnloot"
+    
+    if "spawnenemy" in effect_name:
+        split_name = effect_name.split("_")
+        extra_args.extend(split_name[1:3])
+        effect_name = "spawnenemy"
+
 
     print(f"CrowdControl: Requesting effect {effect_name} with ID {eid}")
     from .Effect import Effect
@@ -189,7 +196,7 @@ def RequestEffect(eid, effect_name, pc, *args):
         return
 
     effect_cls.id = eid
-    effect_cls.args = list(args) + spawnloot_args
+    effect_cls.args = list(args) + extra_args
     effect_cls.pc = pc
 
     try:
