@@ -33,5 +33,5 @@ class SpawnEnemyEffect(Effect):
         else:
             pc = self.pc
 
-        SpawnEnemy(self.args[0], self.args[1], pc)
+        SpawnEnemy(self.args[0], int(self.args[1]), pc)
         return super().run_effect()

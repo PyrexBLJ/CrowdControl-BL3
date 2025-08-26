@@ -108,13 +108,15 @@ def get_spawner() -> UObject | None:
     return enabled_spawners[-1] if len(enabled_spawners) else None
 
 
+EnemiesDict = {
+    "loottink": "Loot Tink"
+}
+
 def SpawnEnemy(EnemyToSpawn, AmountToSpawn, PC) -> bool:
-    print(EnemyToSpawn)
-    print(AmountToSpawn)
-    print(PC)
+    EnemyToSpawn = EnemiesDict[EnemyToSpawn]
     Index = -1
     for i in range(len(PackageName)):
-        if str(EnemyToSpawn).lower() in str(EnemyName[i]).lower().replace(" ", ""):
+        if str(EnemyToSpawn).lower() in str(EnemyName[i]).lower():
             Index = i
             break
 
@@ -138,5 +140,3 @@ def SpawnEnemy(EnemyToSpawn, AmountToSpawn, PC) -> bool:
 
     spawnpoint.K2_SetWorldLocation(originallocation, True, IGNORE_STRUCT, True)
     return True
-
-
