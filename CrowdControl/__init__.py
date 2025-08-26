@@ -27,7 +27,6 @@ client = None
 host = "127.0.0.1"
 port = 42069
 
-# ==== Globals ====
 client_socket = None
 shutdown = False
 do_reset = False
@@ -208,21 +207,6 @@ def RequestEffect(eid, effect_name, pc, *args):
         NotifyEffect(eid, "Finished", effect_name, pc)
 
 
-
-
-
-#def Enable() -> None:
-#    global client
-#    client = AppSocketThread()
-#    return None
-#
-#def Disable() -> None:
-#    global client, shutdown
-#    shutdown = True
-#    if client != None:
-#        client.shutdown()
-#        client = None
-#    return None
 
 @hook("/Script/Engine.PlayerController:ServerChangeName", Type.PRE)
 def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
