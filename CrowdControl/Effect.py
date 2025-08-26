@@ -8,6 +8,8 @@ from unrealsdk.unreal import UObject
 class Effect:
     registry = {}
     running_effects = []
+    effect_name:str
+    display_name:str = "Missing Display Name"
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -16,7 +18,6 @@ class Effect:
     def __init__(self) -> None:
         self.id: int = -1
         self.effect_name:str
-        self.display_name:str = "Missing Display Name"
         self.duration:int = 0
         self.args:list = []
         self.is_running:bool = False

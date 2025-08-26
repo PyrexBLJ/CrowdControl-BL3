@@ -93,19 +93,17 @@ library = find_object("Object", "/Script/GbxSpawn.Default__SpawnerBlueprintLibra
 
 
 def get_spawn_point() -> UObject | None:
-    enabled_points = []
     for spawn_point in find_all("OakSpawnPointComponent"):
         if spawn_point.bEnabled and spawn_point.SpawnPoint and "Default" not in str(spawn_point):
-            enabled_points.append(spawn_point)
-    return enabled_points[-1] if len(enabled_points) else None
+            return spawn_point
+    return None
 
     
 def get_spawner() -> UObject | None:
-    enabled_spawners = []
     for spawner in find_all("OakSpawnerComponent"):
         if spawner.bEnabled and "GEN_VARIABLE" not in str(spawner) and "Default" not in str(spawner):
-                enabled_spawners.append(spawner)
-    return enabled_spawners[-1] if len(enabled_spawners) else None
+                return spawner
+    return None
 
 
 EnemiesDict = {
@@ -114,11 +112,11 @@ EnemiesDict = {
 
 def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> bool:
     EnemyToSpawn = EnemiesDict[EnemyToSpawn]
-    Index = -1
-    for i in range(len(PackageName)):
-        if str(EnemyToSpawn).lower() in str(EnemyName[i]).lower():
-            Index = i
-            break
+    Index = EnemyName.index(EnemyToSpawn)
+    #for i in range(len(PackageName)):
+    #    if str(EnemyToSpawn).lower() in str().lower():
+    #        Index = i
+    #        break
 
     if Index == -1:
         return False
@@ -126,11 +124,17 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> bool:
     factory = find_class("SpawnFactory_OakAI").ClassDefaultObject
     load_package(str(Package[Index]))
     factory.AIActorClass = find_object("BlueprintGeneratedClass", str(PackageName[Index]))
+
     spawnpoint = get_spawn_point()
+    originalstyle = spawnpoint.SpawnPoint.GetSpawnStyleTag()
+    no_spawn = make_struct("GameplayTag",TagName="None")
+    spawnpoint.SpawnPoint.SetSpawnStyleTag(no_spawn)
     originallocation = spawnpoint.K2_GetComponentLocation()
     spawnpoint.K2_SetWorldLocation(make_struct("Vector", X=100000,Y=100000,Z=500000), True, IGNORE_STRUCT, True)
+
     PCLoc = PC.pawn.K2_GetActorLocation()
     PCRot = PC.pawn.K2_GetActorRotation()
+
     location = make_struct("Vector", X=PCLoc.X + 500 * math.cos(math.radians((PCRot.Yaw))), Y=PCLoc.Y + 500 * math.sin(math.radians((PCRot.Yaw))), Z=PCLoc.Z)
     Rotator = make_struct("Rotator", Roll =0, Pitch=0, Yaw=PCRot.Yaw-180)     
 
@@ -139,4 +143,5 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> bool:
         actor.K2_TeleportTo(location, Rotator)
 
     spawnpoint.K2_SetWorldLocation(originallocation, True, IGNORE_STRUCT, True)
+    spawnpoint.SpawnPoint.SetSpawnStyleTag(originalstyle)
     return True

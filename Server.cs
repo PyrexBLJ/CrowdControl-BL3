@@ -32,7 +32,12 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Clutter Backpack", "clutter_inventory"),
         new("Meet Lilith on the Bridge", "report_to_lilith") { Duration = 30 },
         new("Silly Scales", "silly_scales"),
-        new("Spawn Loot Tink", "spawnenemy_loottink_1"),
+        new("Spawn Loot Tink", "spawnenemy_loottink_1") { Category = new EffectGrouping("Spawn Enemies") },
+        new("Start Bloody Harvest", "harvest_event") { Category = new EffectGrouping("Events") },
+        new("Start Broken Hearts Day", "valentines_event") { Category = new EffectGrouping("Events") },
+        new("Start Revenge Of The Cartels", "cartel_event") { Category = new EffectGrouping("Events") },
+        new("Disable All Events", "disable_events") { Category = new EffectGrouping("Events") },
+
 
     };
 }
