@@ -1,6 +1,6 @@
 from random import randint, Random
 import time
-from .comms import NotifyEffect
+#from .comms import NotifyEffect
 
 
 class Effect:
@@ -32,7 +32,8 @@ class Effect:
     def stop_effect(self):
         self.is_running = False
         Effect.running_effects.remove(self.effect_name)
-        NotifyEffect(self.thread, self.id, "Finished", self.effect_name, self.pc)
+        from . import NotifyEffect
+        NotifyEffect(self.id, "Finished", self.effect_name, self.pc)
 
     def on_map_change(self):
         #runs as soon as the loading screen finishes

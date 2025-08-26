@@ -1,13 +1,11 @@
 import socket
 import time
-import threading
+import select
 import json
-import unrealsdk
-from mods_base import build_mod, hook
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
-from unrealsdk.hooks import Type
+from mods_base import build_mod, hook #type: ignore
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
+from unrealsdk.hooks import Type #type: ignore
 from typing import Any
-import random
 #from .comms import RequestEffect, NotifyEffect
 from .Utils import AmIHost, CrowdControl_PawnList_Possessed, CrowdControl_PawnList_Unpossessed
 from .Effect import *
@@ -29,12 +27,6 @@ client = None
 host = "127.0.0.1"
 port = 42069
 
-import socket
-import json
-import time
-import select
-from mods_base import get_pc
-
 # ==== Globals ====
 client_socket = None
 shutdown = False
@@ -47,19 +39,16 @@ effects = set()
 timed = set()
 paused = set()
 
-
-# ==== Socket connection handling ====
-
 def connect_socket(host, port):
     global client_socket, do_reset, connecting
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.setblocking(False)
-        s.connect_ex((host, port))  # non-blocking connect
+        s.connect_ex((host, port))
         client_socket = s
         connecting = True
         do_reset = True
-        print(f"CrowdControl: Connecting to {host}:{port}...")
+        print(f"CrowdControl: Connecting to {host}:{port}... (leaking this ip is fine you can relax)")
     except Exception as e:
         print(f"CrowdControl: Connection failed: {e}")
         client_socket = None
@@ -77,7 +66,6 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
         return
 
     try:
-        # still waiting for handshake?
         if connecting:
             _, writable, _ = select.select([], [client_socket], [], 0)
             if writable:
@@ -85,7 +73,6 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                 print("CrowdControl: Connected!")
             return
 
-        # check for data
         ready, _, _ = select.select([client_socket], [], [], 0)
         if ready:
             chunk = client_socket.recv(1024)
@@ -110,23 +97,24 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                     print(f"CrowdControl: JSON parse error: {e}")
                     continue
 
-                print(message)
-                eid = message["id"]
-                effect = message["code"]
-                duration = message.get("duration", None)
-                parameters = message.get("parameters", None)
+                if message["type"] != 253:
+                    print(message)
+                    eid = message["id"]
+                    effect = message["code"]
+                    duration = message.get("duration", None)
+                    parameters = message.get("parameters", None)
 
-                if duration:
-                    duration /= 1000
+                    if duration:
+                        duration /= 1000
 
-                if duration and parameters:
-                    RequestEffect(eid, effect, get_pc(), duration, *parameters)
-                elif parameters:
-                    RequestEffect(eid, effect, get_pc(), *parameters)
-                elif duration:
-                    RequestEffect(eid, effect, get_pc(), duration)
-                else:
-                    RequestEffect(eid, effect, get_pc())
+                    if duration and parameters:
+                        RequestEffect(eid, effect, get_pc(), duration, *parameters)
+                    elif parameters:
+                        RequestEffect(eid, effect, get_pc(), *parameters)
+                    elif duration:
+                        RequestEffect(eid, effect, get_pc(), duration)
+                    else:
+                        RequestEffect(eid, effect, get_pc())
 
     except Exception as e:
         print(f"CrowdControl Socket Error: {e}")
@@ -136,20 +124,19 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
         connecting = False
 
 
-# ==== Effect response helpers ====
-
 def getResponseType(status: str) -> bytes:
     statuses = ["Success", "Failure", "Unavailable", "Retry", "Queue", "Running", "Paused", "Resumed", "Finished"]
     try:
         return bytes([statuses.index(status)])
     except ValueError:
-        return bytes([1])  # "Failure"
+        return bytes([1])
 
 
 def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
     global client_socket
 
     if pc != get_pc():
+        print(pc)
         pc.ClientMessage(f"{eid}-{code}-{status}", "CrowdControl", float(pc.PlayerState.PlayerID))
         return
 
@@ -177,6 +164,7 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
 
     try:
         if client_socket:
+            print(f"Response: {message}")
             payload = json.dumps(message).encode("utf-8") + b"\x00"
             client_socket.send(payload)
         else:
@@ -259,9 +247,9 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
             return None
         
         if request[4] != "None": # request[4] are the args
-            RequestEffect(thread, request[3], request[2], obj, request[4])
+            RequestEffect(request[3], request[2], obj, request[4])
         else:
-            RequestEffect(thread, request[3], request[2], obj)
+            RequestEffect(request[3], request[2], obj)
 
         #if request[2] == "example_effect":
             # do the effect stuff
@@ -286,7 +274,7 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
         
         response: list = args.S.split("-")
 
-        NotifyEffect(thread, response[0], response[2], response[1]) #ngl idk the best way to deal with timeremaining yet
+        NotifyEffect(response[0], response[2], response[1]) #ngl idk the best way to deal with timeremaining yet
 
     return None
 
