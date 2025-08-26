@@ -8,7 +8,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type
 from typing import Any
 import random
-from .comms import RequestEffect, NotifyEffect
+#from .comms import RequestEffect, NotifyEffect
 from .Utils import AmIHost, CrowdControl_PawnList_Possessed, CrowdControl_PawnList_Unpossessed
 from .Effect import *
 from .OneHealth import *
@@ -26,105 +26,215 @@ TIMEOUT = 15
 
 client = None
 
+host = "127.0.0.1"
+port = 42069
+
+import socket
+import json
+import time
+import select
+from mods_base import get_pc
+
+# ==== Globals ====
+client_socket = None
 shutdown = False
+do_reset = False
+wait_ticks = 0
+buffer = b""
+connecting = False
 
-thread = None
-class AppSocketThread(threading.Thread):
-    #repurposed from:
-    # - https://stackoverflow.com/questions/27284358/connect-to-socket-on-localhost
-    # - https://stackoverflow.com/questions/51677868/parse-json-message-from-socket-using-python
-    host = "127.0.0.1"
-    port = 42069
-    socket = None
-
-    def __init__(self, name='cc-app-socket-thread'):
-        global thread
-        super(self.__class__, self).__init__(name=name)
-        thread = self
-        self.start()
-
-    def run(self):
-        global thread, shutdown
-        print("CrowdControl: Socket Thread Running!")
-        while True:
-            if shutdown:
-                shutdown = False
-                break
-            #print(f"CrowdControl: Attempting to connect on {self.host}:{self.port}")
-            do_reset = False
-            try:
-                s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                s.connect((self.host,self.port))
-                print(f"CrowdControl: Connected on {self.host}:{self.port}")
-                do_reset = True
-                self.socket = s
-                buffer = ''
-                while True:
-                    if shutdown:
-                        shutdown = False
-                        break
-                    chunk = s.recv(1024)
-                    if not chunk:
-                        continue
-                    buffer += chunk.decode('utf-8')
-                    atoms = buffer.split(u'\x00')
-                    if len(atoms) > 1:
-                        buffer = atoms.pop()
-                        for atom in atoms:
-                            message = json.loads(atom)
-                            print(message)
-                            eid = message["id"]
-                            #if Shared is None:
-                                #print(f"CrowdControl: Need to be loaded into a save to run effects!")
-                                #NotifyEffect(eid, "NotReady")
-                                #continue
-                            effect = message["code"]
-                            duration = message.get("duration",None)
-                            parameters = message.get("parameters",None)
-                            if duration:
-                                duration /= 1000
-                            if duration and parameters:
-                                RequestEffect(thread, eid, effect, get_pc(), duration, *parameters)
-                            elif parameters:
-                                RequestEffect(thread, eid, effect, get_pc(), *parameters)
-                            elif duration:
-                                RequestEffect(thread, eid, effect, get_pc(), duration)
-                            else:
-                                RequestEffect(thread, eid, effect, get_pc())
-            except ConnectionResetError:
-                print("Connection Reset")
-                pass
-            except ConnectionRefusedError:
-                print("Connection Refused")
-                time.sleep(5)
-                pass
-            except ConnectionAbortedError:
-                print("Connection Aborted")
-                pass
-            finally:
-                if do_reset and Shared is not None:
-                    #Scribe.Send("CrowdControl: Reset")
-                    print("resetting connection")
-                    do_reset = False
-                time.sleep(5)
-                continue
-
-    def shutdown(self):
-        self.socket.close()
+effects = set()
+timed = set()
+paused = set()
 
 
-def Enable() -> None:
-    global client
-    client = AppSocketThread()
-    return None
+# ==== Socket connection handling ====
 
-def Disable() -> None:
-    global client, shutdown
-    shutdown = True
-    if client != None:
-        client.shutdown()
-        client = None
-    return None
+def connect_socket(host, port):
+    global client_socket, do_reset, connecting
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.setblocking(False)
+        s.connect_ex((host, port))  # non-blocking connect
+        client_socket = s
+        connecting = True
+        do_reset = True
+        print(f"CrowdControl: Connecting to {host}:{port}...")
+    except Exception as e:
+        print(f"CrowdControl: Connection failed: {e}")
+        client_socket = None
+        connecting = False
+
+
+@hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE)
+def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction,) -> Any:
+    global shutdown, do_reset, wait_ticks, client_socket, buffer, connecting
+
+    if client_socket is None:
+        if time.time() - wait_ticks > 10:
+            wait_ticks = time.time()
+            connect_socket(host, port)
+        return
+
+    try:
+        # still waiting for handshake?
+        if connecting:
+            _, writable, _ = select.select([], [client_socket], [], 0)
+            if writable:
+                connecting = False
+                print("CrowdControl: Connected!")
+            return
+
+        # check for data
+        ready, _, _ = select.select([client_socket], [], [], 0)
+        if ready:
+            chunk = client_socket.recv(1024)
+            if not chunk:
+                client_socket.close()
+                client_socket = None
+                print("CrowdControl: Disconnected")
+                return
+
+            buffer += chunk
+            while True:
+                atoms = buffer.split(b'\x00', 2)
+                if len(atoms) < 2:
+                    break
+
+                message_bytes = atoms[0]
+                buffer = atoms[1] if len(atoms) > 1 else b""
+
+                try:
+                    message = json.loads(message_bytes.decode('utf-8'))
+                except Exception as e:
+                    print(f"CrowdControl: JSON parse error: {e}")
+                    continue
+
+                print(message)
+                eid = message["id"]
+                effect = message["code"]
+                duration = message.get("duration", None)
+                parameters = message.get("parameters", None)
+
+                if duration:
+                    duration /= 1000
+
+                if duration and parameters:
+                    RequestEffect(eid, effect, get_pc(), duration, *parameters)
+                elif parameters:
+                    RequestEffect(eid, effect, get_pc(), *parameters)
+                elif duration:
+                    RequestEffect(eid, effect, get_pc(), duration)
+                else:
+                    RequestEffect(eid, effect, get_pc())
+
+    except Exception as e:
+        print(f"CrowdControl Socket Error: {e}")
+        if client_socket:
+            client_socket.close()
+        client_socket = None
+        connecting = False
+
+
+# ==== Effect response helpers ====
+
+def getResponseType(status: str) -> bytes:
+    statuses = ["Success", "Failure", "Unavailable", "Retry", "Queue", "Running", "Paused", "Resumed", "Finished"]
+    try:
+        return bytes([statuses.index(status)])
+    except ValueError:
+        return bytes([1])  # "Failure"
+
+
+def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
+    global client_socket
+
+    if pc != get_pc():
+        pc.ClientMessage(f"{eid}-{code}-{status}", "CrowdControl", float(pc.PlayerState.PlayerID))
+        return
+
+    if status is None:
+        status = "Success"
+
+    if eid in effects:
+        effects.remove(eid)
+
+    message = {"id": eid, "status": status, "code": code, "type": 0}
+
+    if timeRemaining is not None:
+        print(f"CrowdControl: Responding with {status} with {timeRemaining} seconds remaining for effect with ID {eid}")
+        message["timeRemaining"] = timeRemaining
+        timed.add(eid)
+    else:
+        print(f"CrowdControl: Responding with {status} for effect with ID {eid}")
+
+    if status == "Finished":
+        timed.discard(eid)
+        paused.discard(eid)
+    elif status == "Paused":
+        timed.add(eid)
+        paused.add(eid)
+
+    try:
+        if client_socket:
+            payload = json.dumps(message).encode("utf-8") + b"\x00"
+            client_socket.send(payload)
+        else:
+            print("CrowdControl: No active socket to send response.")
+    except Exception as e:
+        print(f"CrowdControl: Failed to send response: {e}")
+
+
+def RequestEffect(eid, effect_name, pc, *args):
+    spawnloot_args = []
+    if "spawnloot" in effect_name:
+        split_name = effect_name.split("_")
+        spawnloot_args.extend(split_name[1:3])
+        effect_name = "spawnloot"
+
+    print(f"CrowdControl: Requesting effect {effect_name} with ID {eid}")
+    from .Effect import Effect
+    effect_cls = Effect.registry.get(effect_name)
+
+    if not effect_cls:
+        print(f"CrowdControl: Effect {effect_name} not found.")
+        NotifyEffect(eid, "Unavailable", effect_name)
+        return
+
+    effect_cls.id = eid
+    effect_cls.args = list(args) + spawnloot_args
+    effect_cls.pc = pc
+
+    try:
+        effect_cls.duration = int(args[0]) if args else 0
+    except Exception:
+        effect_cls.duration = 0
+
+    effects.add(eid)
+    effect_cls.run_effect()
+
+    if effect_cls.duration > 0:
+        NotifyEffect(eid, "Started", effect_name, pc, effect_cls.duration * 1000)
+        effect_cls.start_time = time.time()
+    else:
+        NotifyEffect(eid, "Finished", effect_name, pc)
+
+
+
+
+
+#def Enable() -> None:
+#    global client
+#    client = AppSocketThread()
+#    return None
+#
+#def Disable() -> None:
+#    global client, shutdown
+#    shutdown = True
+#    if client != None:
+#        client.shutdown()
+#        client = None
+#    return None
 
 @hook("/Script/Engine.PlayerController:ServerChangeName", Type.PRE)
 def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
@@ -210,4 +320,4 @@ def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFun
                 inst.stop_effect()
 
 
-build_mod(on_enable=Enable, on_disable=Disable)
+build_mod()
