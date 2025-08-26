@@ -112,7 +112,7 @@ EnemiesDict = {
     "loottink": "Loot Tink"
 }
 
-def SpawnEnemy(EnemyToSpawn, AmountToSpawn, PC) -> bool:
+def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> bool:
     EnemyToSpawn = EnemiesDict[EnemyToSpawn]
     Index = -1
     for i in range(len(PackageName)):

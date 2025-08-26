@@ -1,5 +1,6 @@
 from .Effect import Effect
 from typing import Any
+from mods_base import ENGINE
 from unrealsdk import find_object, make_struct, find_all, find_class
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook 
@@ -8,6 +9,8 @@ import random
 
 class OopsAllPsychos(Effect):
     effect_name = "oops_all_psychos"
+    display_name = "Oops All Psychos"
+
     def set_spawns(self):
         no_spawn = make_struct("GameplayTag",TagName="None")
         for point in find_all("SpawnPoint",False):
@@ -23,7 +26,6 @@ class OopsAllPsychos(Effect):
 
     def oops_psychos_dim(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
         self.set_spawns()
-
 
     def run_effect(self):
         self.set_spawns()
@@ -42,6 +44,7 @@ class OopsAllPsychos(Effect):
 
 class LaunchPlayer(Effect):
     effect_name = "launch_player"
+    display_name = "Launch Player"
     def run_effect(self):
         CurrentVel = self.pc.Pawn.OakCharacterMovement.Velocity
         CurrentVel.Z += 10000
@@ -51,7 +54,7 @@ class LaunchPlayer(Effect):
 
 class ClutterInventory(Effect):
     effect_name = "clutter_inventory"
-
+    display_name = "Clutter Backpack"
     def run_effect(self):
         ItemPoolData = find_object("ItemPoolData", "/Game/GameData/Loot/ItemPools/Guns/ItemPool_TrialsChests.ItemPool_TrialsChests")
             
@@ -64,10 +67,10 @@ class ClutterInventory(Effect):
 
 class ReportToLilith(Effect):
     effect_name = "report_to_lilith"
-
+    display_name = "Report To Lilith"
     def run_effect(self):
         Station = find_object('FastTravelStationData','/Game/GameData/FastTravel/FTS_Sanctuary.FTS_Sanctuary')
-        FastTravel = None
+        FastTravel:UObject
         for travel in find_all("FastTravelStationComponent"):
             if "Default" not in str(travel):
                 FastTravel = travel
@@ -81,14 +84,62 @@ class ReportToLilith(Effect):
         self.pc.Pawn.K2_TeleportTo(loc,rot)
         return super().map_change_finalized()
     
+
 class SillyScales(Effect):
     effect_name = "silly_scales"
-
+    display_name = "Silly Scales"
     def GetRandomizedScale(self) -> WrappedStruct:
-        RandomScale = random.uniform(0.1, 2.5)
-        return make_struct("Vector", X=RandomScale,Y=RandomScale,Z=RandomScale)
+        RandomX = random.uniform(0.1, 2.5)
+        RandomY = random.uniform(0.1, 2.5)
+        RandomZ = random.uniform(0.5, 1.5)
+        return make_struct("Vector", X=RandomX,Y=RandomY,Z=RandomZ)
+
+    def SillyScalesPawnPossessed(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
+        if not obj.IsPlayerControlled():
+            obj.SetActorScale3D(self.GetRandomizedScale())
 
     def run_effect(self):
-        for Pawn in GetPawnList():
+        add_hook("/Script/Engine.Pawn:ReceivePossessed", Type.POST, "SillyScalesPawnPossessed", self.SillyScalesPawnPossessed)
+        for Pawn in GetPawnList(False):
             Pawn.SetActorScale3D(self.GetRandomizedScale())
+        return super().run_effect()
+    
+    def stop_effect(self):
+        remove_hook("/Script/Engine.Pawn:ReceivePossessed", Type.POST, "SillyScalesPawnPossessed")
+        return super().stop_effect()
+    
+    
+def StartEvent(EventEnum:int):
+    ENGINE.GameViewport.World.GameState.ActiveLeague = EventEnum
+
+class DisableEvents(Effect):
+    effect_name = "disable_events"
+    display_name = "Disable All Events"
+
+    def run_effect(self):
+        StartEvent(0)
+        return super().run_effect()
+    
+class HarvestEvent(Effect):
+    effect_name = "harvest_event"
+    display_name = "Bloody Harvest"
+
+    def run_effect(self):
+        StartEvent(1)
+        return super().run_effect()
+
+class ValentinesEvent(Effect):
+    effect_name = "valentines_event"
+    display_name = "Broken Hearts Day"
+
+    def run_effect(self):
+        StartEvent(2)
+        return super().run_effect()
+    
+class CartelEvent(Effect):
+    effect_name = "cartel_event"
+    display_name = "Revenge Of The Cartels"
+
+    def run_effect(self):
+        StartEvent(3)
         return super().run_effect()

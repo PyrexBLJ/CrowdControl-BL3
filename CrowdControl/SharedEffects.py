@@ -24,6 +24,7 @@ class SpawnLootEffect(Effect):
 class SpawnEnemyEffect(Effect):
     """
     to add to this effect add the enemy name to the dict in utils and make a note on how many should spawn
+    you can also spawn enemies in your own effects by using the SpawnEnemy function in utils
     """
     effect_name = "spawnenemy"
 
