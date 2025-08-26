@@ -67,7 +67,11 @@ class ReportToLilith(Effect):
 
     def run_effect(self):
         Station = find_object('FastTravelStationData','/Game/GameData/FastTravel/FTS_Sanctuary.FTS_Sanctuary')
-        FastTravel = find_class("FastTravelStationComponent").ClassDefaultObject
+        FastTravel = None
+        for travel in find_all("FastTravelStationComponent"):
+            if "Default" not in str(travel):
+                FastTravel = travel
+                break
         FastTravel.FastTravelToStation(self.pc.Pawn, Station, self.pc.Pawn)
         return super().run_effect()
     
