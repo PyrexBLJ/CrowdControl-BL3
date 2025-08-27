@@ -1,6 +1,6 @@
 from .Effect import Effect
 from typing import Any
-from mods_base import ENGINE
+from mods_base import ENGINE,get_pc
 from unrealsdk import find_object, make_struct, find_all, find_class
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook 
@@ -108,38 +108,53 @@ class SillyScales(Effect):
         remove_hook("/Script/Engine.Pawn:ReceivePossessed", Type.POST, "SillyScalesPawnPossessed")
         return super().stop_effect()
     
-    
-def StartEvent(EventEnum:int):
-    ENGINE.GameViewport.World.GameState.ActiveLeague = EventEnum
 
-class DisableEvents(Effect):
-    effect_name = "disable_events"
-    display_name = "Disable All Events"
-
-    def run_effect(self):
-        StartEvent(0)
-        return super().run_effect()
     
 class HarvestEvent(Effect):
     effect_name = "harvest_event"
     display_name = "Bloody Harvest"
 
     def run_effect(self):
-        StartEvent(1)
+        misson_class = None
+        for mission in self.pc.PlayerMissionComponent.CachedMissionTracker.MissionList:
+            if mission.MissionClass.Name == "Mission_Season_01_Intro_C":
+                misson_class = mission.MissionClass
+                mission.Status= 1
+                mission.ObjectivesProgress= [1, 1, 1, 25, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                mission.ActiveObjectiveSet= find_object('MissionObjectiveSet','/Game/PatchDLC/BloodyHarvest/Missions/Side/Seasonal/Mission_Season_01_Intro.Set_FindLeagueBoss_ObjectiveSet')
+                mission.bKickoffPlayed= True
+
+        self.pc.PlayerMissionComponent.ServerSetTrackedMission(misson_class)
+        LevelTravelStation = find_object('FastTravelStationData','/Game/PatchDLC/BloodyHarvest/GameData/FastTravel/LevelTravelData/FTS_BloodyHarvest.FTS_BloodyHarvest')
+        FastTravel:UObject
+        for travel in find_all("FastTravelStationComponent"):
+            if "Default" not in str(travel) and "GEN_VARIABLE" not in str(travel):
+                FastTravel = travel
+                break
+        FastTravel.FastTravelToStation(self.pc.Pawn, LevelTravelStation, self.pc.Pawn)
         return super().run_effect()
 
-class ValentinesEvent(Effect):
-    effect_name = "valentines_event"
-    display_name = "Broken Hearts Day"
 
-    def run_effect(self):
-        StartEvent(2)
-        return super().run_effect()
-    
 class CartelEvent(Effect):
     effect_name = "cartel_event"
     display_name = "Revenge Of The Cartels"
 
     def run_effect(self):
-        StartEvent(3)
+        misson_class = None
+        for mission in get_pc().PlayerMissionComponent.CachedMissionTracker.MissionList:
+            if mission.MissionClass.Name == "Mission_Season_02_Intro_C":
+                misson_class = mission.MissionClass
+                mission.Status= 1
+                mission.ObjectivesProgress= [1, 1, 0, 0, 0, 30, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                mission.ActiveObjectiveSet= find_object('MissionObjectiveSet','/Game/PatchDLC/Event2/Missions/Side/Seasonal/Mission_Season_02_Intro.Set_ReachFrontGate_ObjectiveSet')
+                mission.bKickoffPlayed= True
+
+        get_pc().PlayerMissionComponent.ServerSetTrackedMission(misson_class)
+        LevelTravelStation = find_object('FastTravelStationData','/Game/PatchDLC/Event2/GameData/FastTravel/LevelTravelData/FTS_CartelHideout.FTS_CartelHideout')
+        FastTravel:UObject
+        for travel in find_all("FastTravelStationComponent"):
+            if "Default" not in str(travel) and "GEN_VARIABLE" not in str(travel):
+                FastTravel = travel
+                break
+        FastTravel.FastTravelToStation(get_pc().Pawn, LevelTravelStation, get_pc().Pawn)
         return super().run_effect()
