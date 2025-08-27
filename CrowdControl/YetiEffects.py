@@ -1,7 +1,7 @@
 from .Effect import Effect
 from typing import Any
 from mods_base import ENGINE,get_pc
-from unrealsdk import find_object, make_struct, find_all, find_class
+from unrealsdk import find_object, make_struct, find_all, find_class, load_package
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct,IGNORE_STRUCT
 from unrealsdk.hooks import Type, add_hook, remove_hook, prevent_hooking_direct_calls
 from .Utils import blacklist_teams,oak_blueprint_library,GetPawnList
@@ -175,7 +175,11 @@ class CartelEvent(Effect):
         self.pc.PlayerMissionComponent.ServerSetTrackedMission(misson_class)
         
         TravelStationData = find_object('FastTravelStationData','/Game/PatchDLC/Event2/GameData/FastTravel/LevelTravelData/FTS_CartelHideout.FTS_CartelHideout')
-        FastTravel = find_class("FastTravelStationComponent").ClassDefaultObject
-        FastTravel.FastTravelToStation(None, TravelStationData, self.pc.Pawn)
+        for travel in find_all("FastTravelStationComponent"):
+            if "Default" not in str(travel):
+                FastTravel = travel
+                break
+        
+        FastTravel.FastTravelToStation(self.pc.Pawn, TravelStationData, self.pc.Pawn)
         return super().run_effect()
     

@@ -110,7 +110,7 @@ EnemiesDict = {
     "loottink": "Loot Tink"
 }
 
-def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> bool:
+def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = "") -> bool:
     EnemyToSpawn = EnemiesDict[EnemyToSpawn]
     Index = EnemyName.index(EnemyToSpawn)
     #for i in range(len(PackageName)):
@@ -141,6 +141,10 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> bool:
     for i in range(AmountToSpawn):
         actor = library.SpawnActorWithSpawner(PC, factory, spawnpoint, get_spawner(), None)
         actor.K2_TeleportTo(location, Rotator)
+        if DisplayName:
+            name = find_class("GbxUIName").ClassDefaultObject
+            name.DisplayName = DisplayName
+            actor.TargetableComponent.SetTargetUIName(name)
 
     spawnpoint.K2_SetWorldLocation(originallocation, True, IGNORE_STRUCT, True)
     spawnpoint.SpawnPoint.SetSpawnStyleTag(originalstyle)
