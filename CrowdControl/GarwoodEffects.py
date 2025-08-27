@@ -4,6 +4,7 @@ from mods_base import ENGINE,get_pc
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
+from unrealsdk import make_struct
 
 class SuperHot(Effect):
 
@@ -38,13 +39,17 @@ class SizeSteal(Effect):
     display_name = "Size Steal"
 
     def run_effect(self):
+        global originalsize
+        originalsize = self.pc.Pawn.GetActorScale3D()
         add_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal", self.size_steal)
         return super().run_effect()
 
     def size_steal(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
-        obj.GetOwner().SetActorScale3D(unrealsdk.make_struct("Vector" , X = obj.GetOwner().GetActorScale3D().X * (1/1.05), Y = obj.GetOwner().GetActorScale3D().Y * (1/1.05), Z = obj.GetOwner().GetActorScale3D().Z * (1/1.05)))
-        args.DamageCauser.GetOwner().SetActorScale3D(unrealsdk.make_struct("Vector" , X = args.DamageCauser.GetOwner().GetActorScale3D().X * 1.05, Y = args.DamageCauser.GetOwner().GetActorScale3D().Y * 1.05, Z = args.DamageCauser.GetOwner().GetActorScale3D().Z * 1.05))
+        obj.GetOwner().SetActorScale3D(make_struct("Vector" , X = obj.GetOwner().GetActorScale3D().X * (1/1.05), Y = obj.GetOwner().GetActorScale3D().Y * (1/1.05), Z = obj.GetOwner().GetActorScale3D().Z * (1/1.05)))
+        args.DamageCauser.GetOwner().SetActorScale3D(make_struct("Vector" , X = args.DamageCauser.GetOwner().GetActorScale3D().X * 1.05, Y = args.DamageCauser.GetOwner().GetActorScale3D().Y * 1.05, Z = args.DamageCauser.GetOwner().GetActorScale3D().Z * 1.05))
 
     def stop_effect(self):
+        global originalsize
         remove_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal")
+        self.pc.Pawn.SetActorScale3D(originalsize)
         return super().stop_effect()
