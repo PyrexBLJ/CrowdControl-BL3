@@ -38,6 +38,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Instant Death", "instant_death"),
         new("Drop Entire Inventory", "drop_entire_inventory"),
         new("Spawn Vehicle", "spawn_vehicle"),
+        new("Highs And Lows", "HighsLows"),
 
     };
 }
