@@ -93,7 +93,7 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                 try:
                     message = json.loads(message_bytes.decode('utf-8'))
                 except Exception as e:
-                    print(f"CrowdControl: JSON parse error: {e}")
+                    print(f"CrowdControl: JSON parse error: {e}\n{message_bytes}")
                     continue
 
                 if message["type"] != 253:
@@ -149,7 +149,7 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
 
     if timeRemaining is not None:
         print(f"CrowdControl: Responding with {status} with {timeRemaining} seconds remaining for effect with ID {eid}")
-        message["timeRemaining"] = timeRemaining
+        #message["timeRemaining"] = timeRemaining
         timed.add(eid)
     else:
         print(f"CrowdControl: Responding with {status} for effect with ID {eid}")
@@ -208,7 +208,7 @@ def RequestEffect(eid, effect_name, pc, *args):
     effect_cls.run_effect()
 
     if effect_cls.duration > 0:
-        NotifyEffect(eid, "Started", effect_name, pc, effect_cls.duration * 1000)
+        NotifyEffect(eid, "Success", effect_name, pc, effect_cls.duration * 1000)
         effect_cls.start_time = time.time()
     else:
         NotifyEffect(eid, "Finished", effect_name, pc)
@@ -229,7 +229,6 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
 #
 #   you can see an example of this being called in the OneHealth effect
 #
-    global thread
     if "CrowdControl" in args.S:
         request: list = args.S.split("-")
 
@@ -258,7 +257,6 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
 #
 #   As im writing this i dont think we will really much more than this, def will have to handle timed events somehow but im not sure yet
 #
-    global thread
     if args.type == "CrowdControl":
         if args.MsgLifeTime != float(get_pc().PlayerState.PlayerID) or AmIHost():
             return None

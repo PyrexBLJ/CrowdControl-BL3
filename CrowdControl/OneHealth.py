@@ -6,13 +6,14 @@ from .Effect import Effect
 
 
 class SetOneHP(Effect):
-    id = 0
+    #id = 0
     effect_name = "1_health"
+    display_name = "One Health"
     def run_effect(self):
         if AmIHost(): # if we are host just do the effect normally, otherwise we have to ask the host to do it for us
             GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentShield(0)
             GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(1)
-            self.pc.DisplayRolloutNotification("Crowd Control", "Dont die", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            #self.pc.DisplayRolloutNotification("Crowd Control", "Dont die", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         else:
             get_pc().ServerChangeName(f"CrowdControl-{get_pc().PlayerState.PlayerID}-1_health-{self.id}")
         return super().run_effect()
