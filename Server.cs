@@ -37,6 +37,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Start Revenge Of The Cartels", "cartel_event") { Category = new EffectGrouping("Events") },
         new("Instant Death", "instant_death"),
         new("Drop Entire Inventory", "drop_entire_inventory"),
+        new("Spawn Vehicle", "spawn_vehicle"),
 
     };
 }

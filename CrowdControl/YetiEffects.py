@@ -2,8 +2,8 @@ from .Effect import Effect
 from typing import Any
 from mods_base import ENGINE,get_pc
 from unrealsdk import find_object, make_struct, find_all, find_class
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
-from unrealsdk.hooks import Type, add_hook, remove_hook 
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct,IGNORE_STRUCT
+from unrealsdk.hooks import Type, add_hook, remove_hook, prevent_hooking_direct_calls
 from .Utils import blacklist_teams,oak_blueprint_library,GetPawnList
 import random
 
@@ -108,8 +108,31 @@ class SillyScales(Effect):
         remove_hook("/Script/Engine.Pawn:ReceivePossessed", Type.POST, "SillyScalesPawnPossessed")
         return super().stop_effect()
     
+gameplay_statics = find_class("GameplayStatics").ClassDefaultObject
+class SpawnVehicle(Effect):
+    effect_name = "spawn_vehicle"
+    display_name = "Spawn Vehicle"
+    def run_effect(self):
+        ride = gameplay_statics.SpawnObject(find_class("CatchARide"), self.pc)
+        platform = gameplay_statics.SpawnObject(find_class("CatchARidePlatform"), self.pc)
+        ride.CatchARide_Platform1 = platform
 
-    
+        player_loc = self.pc.Pawn.K2_GetActorLocation()
+        player_rot = self.pc.Pawn.K2_GetActorRotation()
+
+        veh_index = self.pc.CurrentSavegame.VehicleLastLoadoutIndex
+        car = self.pc.VehicleSpawnerComponent.VehicleLoadouts[veh_index]
+
+        if "revolver" in str(car.body).lower():
+            platform.PlatformSafeZone.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+            platform.PlatformSmallVehicleSafeZone1.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+            platform.SmallVehicleSpawnSocket1.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+        else:
+            platform.K2_SetActorLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+
+        self.pc.SpawnVehicleFromConfig(self.pc.Pawn.PlayerBalanceState.GetExperienceLevel(),car,ride)
+        return super().run_effect()
+
 class HarvestEvent(Effect):
     effect_name = "harvest_event"
     display_name = "Bloody Harvest"
@@ -141,7 +164,7 @@ class CartelEvent(Effect):
 
     def run_effect(self):
         misson_class = None
-        for mission in get_pc().PlayerMissionComponent.CachedMissionTracker.MissionList:
+        for mission in self.pc.PlayerMissionComponent.CachedMissionTracker.MissionList:
             if mission.MissionClass.Name == "Mission_Season_02_Intro_C":
                 misson_class = mission.MissionClass
                 mission.Status= 1
@@ -149,12 +172,10 @@ class CartelEvent(Effect):
                 mission.ActiveObjectiveSet= find_object('MissionObjectiveSet','/Game/PatchDLC/Event2/Missions/Side/Seasonal/Mission_Season_02_Intro.Set_ReachFrontGate_ObjectiveSet')
                 mission.bKickoffPlayed= True
 
-        get_pc().PlayerMissionComponent.ServerSetTrackedMission(misson_class)
-        LevelTravelStation = find_object('FastTravelStationData','/Game/PatchDLC/Event2/GameData/FastTravel/LevelTravelData/FTS_CartelHideout.FTS_CartelHideout')
-        FastTravel:UObject
-        for travel in find_all("FastTravelStationComponent"):
-            if "Default" not in str(travel) and "GEN_VARIABLE" not in str(travel):
-                FastTravel = travel
-                break
-        FastTravel.FastTravelToStation(get_pc().Pawn, LevelTravelStation, get_pc().Pawn)
+        self.pc.PlayerMissionComponent.ServerSetTrackedMission(misson_class)
+        
+        TravelStationData = find_object('FastTravelStationData','/Game/PatchDLC/Event2/GameData/FastTravel/LevelTravelData/FTS_CartelHideout.FTS_CartelHideout')
+        FastTravel = find_class("FastTravelStationComponent").ClassDefaultObject
+        FastTravel.FastTravelToStation(None, TravelStationData, self.pc.Pawn)
         return super().run_effect()
+    
