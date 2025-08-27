@@ -35,6 +35,8 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Spawn Loot Tink", "spawnenemy_loottink_1") { Category = new EffectGrouping("Spawn Enemies") },
         new("Start Bloody Harvest", "harvest_event") { Category = new EffectGrouping("Events") },
         new("Start Revenge Of The Cartels", "cartel_event") { Category = new EffectGrouping("Events") },
+        new("Instant Death", "instant_death"),
+        new("Drop Entire Inventory", "drop_entire_inventory"),
 
     };
 }
