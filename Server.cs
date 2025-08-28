@@ -25,7 +25,6 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("1 Health", "1_health"),
         new("Barrel Troll", "barrel_troll"),
         new("No Gravity", "no_gravity") { Duration = 30 },
-        new("No Ammo", "no_ammo"),
         new("Oops All Psychos", "oops_all_psychos") { Duration =  300 },
         new("Spawn Legendary Weapon", "spawnloot_legendaryweapon_1") { Category = new EffectGrouping("Spawn Loot") },
         new("Launch Player", "launch_player"),
@@ -48,6 +47,10 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Disable Mantling", "disable_mantling") { Duration = 60, Category = new EffectGrouping("Player Effects") },
         new("Disable Crouching", "disable_crouch") { Duration = 60, Category = new EffectGrouping("Player Effects") },
         new("Barrel Net", "barrel_net"),
+        new("Drop Held Weapon", "drop_held_weapon"),
+        new("Drop Equipped Shield", "drop_equipped_shield"),
+        new("Empty Weapon Ammo", "no_ammo"),
+        new("Reset Skill Trees", "reset_skill_trees"),
 
     };
 }

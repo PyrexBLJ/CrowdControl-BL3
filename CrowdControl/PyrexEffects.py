@@ -126,3 +126,54 @@ class FallDamage(Effect):
     def stop_effect(self):
         remove_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook")
         return super().stop_effect()
+    
+class DropHeldWeapon(Effect):
+    effect_name = "drop_held_weapon"
+    display_name = "Drop Held Weapon"
+
+    def run_effect(self):
+        if AmIHost():
+            for item in GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items:
+                if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).ActiveWeapons.WeaponSlots[0].AttachedWeapon):
+                    GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(item.Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
+        else:
+            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-drop_held_weapon-{self.id}")
+        return super().run_effect()
+    
+class DropEquippedShield(Effect):
+    effect_name = "drop_equipped_shield"
+    display_name = "Drop Equipped Shield"
+
+    def run_effect(self):
+        if AmIHost():
+            for item in GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items:
+                if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).EquippedInventory.InventorySlots[1].EquippedInventory):
+                    GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(item.Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
+        else:
+            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-drop_equipped_shield-{self.id}")
+        return super().run_effect()
+    
+class NoAmmo(Effect):
+    effect_name = "no_ammo"
+    display_name = "No Ammo"
+
+    def run_effect(self):
+        if AmIHost():
+            for item in GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items:
+                if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).ActiveWeapons.WeaponSlots[0].AttachedWeapon):
+                    item.StoredActor.UseModeState[0].AmmoComponent.ResourcePool.PoolManager.ResourcePools[item.StoredActor.UseModeState[0].AmmoComponent.ResourcePool.PoolIndexInManager].CurrentValue = 0
+                    item.StoredActor.UseModeState[0].AmmoComponent.LoadedAmmo = 0
+        else:
+            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-no_ammo-{self.id}")
+        return super().run_effect()
+    
+class ResetSkillTrees(Effect):
+    effect_name = "reset_skill_trees"
+    display_name = "Reset Skill Trees"
+
+    def run_effect(self):
+        if AmIHost():
+            GetPlayerCharacter(self.pc).OakPlayerAbilityManager.PurchaseAbilityRespec()
+        else:
+            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-reset_skill_trees-{self.id}")
+        return super().run_effect()
