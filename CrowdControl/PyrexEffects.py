@@ -1,6 +1,10 @@
 from .Effect import Effect
 from .Utils import GetPlayerCharacter, AmIHost
-from mods_base import get_pc #type: ignore
+from mods_base import get_pc, ENGINE #type: ignore
+import unrealsdk #type: ignore
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
+from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
+from typing import Any
 
 
 class NoGravity(Effect):
@@ -57,3 +61,68 @@ class DropEntireInventory(Effect):
         else:
             self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-drop_entire_inventory-{self.id}")
         return super().run_effect()
+    
+class DeleteGroundItems(Effect):
+    effect_name = "delete_ground_items"
+
+    def run_effect(self):
+        if AmIHost():
+            ognumberofitems: int = len(ENGINE.GameViewport.World.GameState.PickupList)
+            numberofitems: int = len(ENGINE.GameViewport.World.GameState.PickupList)
+            deleteindex: int = 0
+            combinedvalue: int = 0
+            while numberofitems > 0:
+                if "RarityData_00_Mission" not in str(ENGINE.GameViewport.World.GameState.PickupList[deleteindex].AssociatedInventoryRarityData) and "GunRack" not in str(ENGINE.GameViewport.World.GameState.PickupList[deleteindex]):
+                    try:
+                        combinedvalue += ENGINE.GameViewport.World.GameState.PickupList[deleteindex].CachedInventoryBalanceComponent.MonetaryValue
+                    except:
+                        pass
+                    ENGINE.GameViewport.World.GameState.PickupList[deleteindex].K2_DestroyActor_DEPRECATED()
+                    numberofitems -= 1
+                else:
+                    deleteindex += 1
+                    numberofitems -= 1
+            
+            for player in ENGINE.GameViewport.World.GameState.PlayerArray:
+                player.Owner.ServerAddCurrency(combinedvalue, unrealsdk.find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money"))
+            self.display_name = f"{ognumberofitems - deleteindex} Items Deleted"
+            combinedvalue = 0
+        else:
+            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-delete_ground_items-{self.id}")
+        return super().run_effect()
+    
+class FallDamage(Effect):
+    effect_name = "fall_damage"
+    display_name = "Fall Damage"
+
+    def dofalldamage(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+        fallvelocity = min(obj.OakCharacterMovement.Velocity.Z * -1, 4000)
+        if fallvelocity > 950:
+            fallvelocity -= 1000
+
+            totalhp = obj.OakDamageComponent.GetTotalMaxHealth()
+            shield = obj.OakDamageComponent.GetCurrentShield()
+            health = obj.OakDamageComponent.GetCurrentHealth()
+
+            fallpercentage = (fallvelocity / 3000) * 100
+            maxfalldamage = totalhp * (50 / 100)
+            totaldamage = maxfalldamage * fallpercentage / 100
+
+            if shield - totaldamage < 0:
+                totaldamage -= shield
+                obj.OakDamageComponent.SetCurrentShield(0)
+                obj.OakDamageComponent.SetCurrentHealth(health - totaldamage)
+            else:
+                obj.OakDamageComponent.SetCurrentShield(shield - totaldamage)
+        return None
+    
+    def run_effect(self):
+        if AmIHost():
+            add_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook", self.dofalldamage)
+        else:
+            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-fall_damage-{self.id}")
+        return super().run_effect()
+    
+    def stop_effect(self):
+        remove_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook")
+        return super().stop_effect()

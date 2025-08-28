@@ -41,6 +41,8 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Highs And Lows", "HighsLows"),
         new("Super Hot", "super_hot") { Duration = 60 },
         new("Size Steal", "size_steal") { Duration = 60 },
+        new("Delete Ground Items", "delete_ground_items"),
+        new("Enable Fall Damage", "fall_damage") { Duration = 60 },
 
     };
 }
