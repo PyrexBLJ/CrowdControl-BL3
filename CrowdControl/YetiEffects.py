@@ -168,19 +168,20 @@ class CartelEvent(Effect):
             if mission.MissionClass.Name == "Mission_Season_02_Intro_C":
                 misson_class = mission.MissionClass
                 mission.Status= 1
-                mission.ObjectivesProgress= [1, 1, 0, 0, 0, 30, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                mission.ObjectivesProgress= [1, 1, 0, 0, 0, 30, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
                 mission.ActiveObjectiveSet= find_object('MissionObjectiveSet','/Game/PatchDLC/Event2/Missions/Side/Seasonal/Mission_Season_02_Intro.Set_GoToLeagueMap_ObjectiveSet')
                 mission.bKickoffPlayed= True
 
         self.pc.PlayerMissionComponent.ServerSetTrackedMission(misson_class)
         
-        Station = find_object('FastTravelStationData','/Game/GameData/FastTravel/FTS_Sanctuary.FTS_Sanctuary')
+        LevelTravelStation = find_object('FastTravelStationData','/Game/PatchDLC/Event2/GameData/FastTravel/LevelTravelData/FTS_CartelHideout.FTS_CartelHideout')
         FastTravel:UObject
         for travel in find_all("FastTravelStationComponent"):
-            if "Default" not in str(travel):
+            if "Default" not in str(travel) and "GEN_VARIABLE" not in str(travel):
                 FastTravel = travel
                 break
-        FastTravel.FastTravelToStation(self.pc.Pawn, Station, self.pc.Pawn)
+
+        FastTravel.FastTravelToStation(get_pc().Pawn, LevelTravelStation, get_pc().Pawn)
         return super().run_effect()
 
 
