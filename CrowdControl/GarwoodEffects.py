@@ -5,6 +5,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
 from unrealsdk import make_struct
+from .Utils import SpawnInteractiveObject
 
 class SuperHot(Effect):
 
@@ -18,15 +19,15 @@ class SuperHot(Effect):
     def speed_change(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
         if "MenuMap_P" not in str(ENGINE.GameViewport.World.Name):
             if "Vehicle" in str(self.pc.Pawn):
-                if 1/720 * round(self.pc.Pawn.Speed) <= 0.05:
+                if 1/720 * self.pc.Pawn.Speed <= 0.05:
                     ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 0.05
                 else:
-                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1/720 * round(self.pc.Pawn.Speed)
+                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1/720 * self.pc.Pawn.Speed
             else:
-                if 1/720 * round(math.sqrt(self.pc.Pawn.GetVelocity().X**2 + self.pc.Pawn.GetVelocity().Y**2 + self.pc.Pawn.GetVelocity().Z**2)) <= 0.05:
+                if 1/720 * math.sqrt(self.pc.Pawn.GetVelocity().X**2 + self.pc.Pawn.GetVelocity().Y**2 + self.pc.Pawn.GetVelocity().Z**2) <= 0.05:
                     ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 0.05
                 else:
-                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1/720 * round(math.sqrt(self.pc.Pawn.GetVelocity().X**2 + self.pc.Pawn.GetVelocity().Y**2 + self.pc.Pawn.GetVelocity().Z**2))
+                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1/720 * math.sqrt(self.pc.Pawn.GetVelocity().X**2 + self.pc.Pawn.GetVelocity().Y**2 + self.pc.Pawn.GetVelocity().Z**2)
 
     def stop_effect(self):
         remove_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "speed_change")
@@ -53,3 +54,17 @@ class SizeSteal(Effect):
         remove_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal")
         self.pc.Pawn.SetActorScale3D(originalsize)
         return super().stop_effect()
+
+class BarrelNet(Effect):
+
+    effect_name = "barrel_net"
+    display_name = "Barrel Net"
+
+    def run_effect(self):
+        PCLoc = get_pc().pawn.K2_GetActorLocation()
+        PCRot = get_pc().pawn.K2_GetActorRotation()
+        OffSet = 600
+        OffSetAmount: list = [make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + 0, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300)]
+        for AddOffset in OffSetAmount:
+            SpawnInteractiveObject(0,AddOffset,PCRot)
+        return super().run_effect()

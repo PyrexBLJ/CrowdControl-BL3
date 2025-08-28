@@ -7,6 +7,7 @@ from typing import Any
 from argparse import Namespace
 import math
 from .EnemySpawnerLists import Package,PackageName,EnemyName
+from .InteractiveObjectLists import PackageInteractive,PackageNameInteractive
 
 blacklist_teams = [
     "NonPlayers",
@@ -149,3 +150,17 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = ""
     spawnpoint.K2_SetWorldLocation(originallocation, True, IGNORE_STRUCT, True)
     spawnpoint.SpawnPoint.SetSpawnStyleTag(originalstyle)
     return True
+
+def SpawnInteractiveObject(Index: int, Location: None, Rotation: None) -> None:
+    factory = find_class("SpawnFactory_OakInteractiveObject").ClassDefaultObject
+    load_package(str(PackageInteractive[Index]))
+    factory.InteractiveObjectClass = find_object("BlueprintGeneratedClass", str(PackageNameInteractive[Index]))
+    spawnpoint = get_spawn_point()
+    originallocation = spawnpoint.K2_GetComponentLocation()
+    originalspawnaction = str(spawnpoint.SpawnAction.TagName)
+    spawnpoint.SpawnAction.TagName = "None"
+    spawnpoint.K2_SetWorldLocation(Location, True,IGNORE_STRUCT, True)
+    spawnpoint.K2_SetWorldRotation(Rotation, True,IGNORE_STRUCT, True)
+    actor = library.SpawnActorWithSpawner(get_pc(), factory, spawnpoint, get_spawner(), None)
+    spawnpoint.K2_SetWorldLocation(originallocation, True,IGNORE_STRUCT, True)
+    spawnpoint.SpawnAction.TagName = originalspawnaction

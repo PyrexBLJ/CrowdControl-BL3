@@ -47,6 +47,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Disable Jumping", "disable_jumping") { Duration = 60, Category = new EffectGrouping("Player Effects") },
         new("Disable Mantling", "disable_mantling") { Duration = 60, Category = new EffectGrouping("Player Effects") },
         new("Disable Crouching", "disable_crouch") { Duration = 60, Category = new EffectGrouping("Player Effects") },
+        new("Barrel Net", "barrel_net"),
 
     };
 }
