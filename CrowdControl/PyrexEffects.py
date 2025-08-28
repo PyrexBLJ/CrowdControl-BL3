@@ -1,10 +1,11 @@
 from .Effect import Effect
-from .Utils import GetPlayerCharacter, AmIHost
+from .Utils import GetPlayerCharacter, AmIHost, SpawnEnemyEx
 from mods_base import get_pc, ENGINE #type: ignore
 import unrealsdk #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
+import random
 
 
 class NoGravity(Effect):
@@ -177,3 +178,37 @@ class ResetSkillTrees(Effect):
         else:
             self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-reset_skill_trees-{self.id}")
         return super().run_effect()
+    
+class ViewerBadass(Effect):
+    effect_name = "viewer_badass"
+    display_name = "Summoning Viewer Badass"
+
+    possible_enemies = ["Badass CryptoSec Commando", 
+                        "Badass Goliath", 
+                        "Badass Psycho", 
+                        "Badass Jabber", 
+                        "Badass Wardog", 
+                        "Badass Wraith",  
+                        "Badass Major",
+                        "Badass Loader",
+                        "Super Badass Marauder",
+                        "Dark Badass NOG",
+                        "Elite Badass Ratch"]
+
+    def run_effect(self):
+        self.display_name = f"Summoning {self.viewer}"
+        actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
+        if actor != None:
+            print(actor)
+            sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
+            lvl = actor.AIBalanceState.GetExperienceLevel()
+            actor.AIBalanceState.SetExperienceLevel(lvl + 2)
+            sed.SetEventEnemy(actor)
+            sed.SetEventEnemyName(self.viewer)
+            actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
+            actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
+        return super().run_effect()
+    
+    def stop_effect(self):
+        self.display_name = f"{self.viewer} Died"
+        return super().stop_effect()

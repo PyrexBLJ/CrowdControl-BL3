@@ -51,6 +51,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Drop Equipped Shield", "drop_equipped_shield"),
         new("Empty Weapon Ammo", "no_ammo"),
         new("Reset Skill Trees", "reset_skill_trees"),
+        new("Viewer Badass", "viewer_badass"),
 
     };
 }

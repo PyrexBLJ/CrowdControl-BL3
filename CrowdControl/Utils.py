@@ -151,6 +151,41 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = ""
     spawnpoint.SpawnPoint.SetSpawnStyleTag(originalstyle)
     return True
 
+def SpawnEnemyEx(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> UObject:
+    Index = EnemyName.index(EnemyToSpawn)
+    #for i in range(len(PackageName)):
+    #    if str(EnemyToSpawn).lower() in str().lower():
+    #        Index = i
+    #        break
+
+    if Index == -1:
+        return None
+
+    factory = find_class("SpawnFactory_OakAI").ClassDefaultObject
+    load_package(str(Package[Index]))
+    factory.AIActorClass = find_object("BlueprintGeneratedClass", str(PackageName[Index]))
+
+    spawnpoint = get_spawn_point()
+    originalstyle = spawnpoint.SpawnPoint.GetSpawnStyleTag()
+    no_spawn = make_struct("GameplayTag",TagName="None")
+    spawnpoint.SpawnPoint.SetSpawnStyleTag(no_spawn)
+    originallocation = spawnpoint.K2_GetComponentLocation()
+    spawnpoint.K2_SetWorldLocation(make_struct("Vector", X=100000,Y=100000,Z=500000), True, IGNORE_STRUCT, True)
+
+    PCLoc = PC.pawn.K2_GetActorLocation()
+    PCRot = PC.pawn.K2_GetActorRotation()
+
+    location = make_struct("Vector", X=PCLoc.X + 500 * math.cos(math.radians((PCRot.Yaw))), Y=PCLoc.Y + 500 * math.sin(math.radians((PCRot.Yaw))), Z=PCLoc.Z)
+    Rotator = make_struct("Rotator", Roll =0, Pitch=0, Yaw=PCRot.Yaw-180)     
+
+    for i in range(AmountToSpawn):
+        actor = library.SpawnActorWithSpawner(PC, factory, spawnpoint, get_spawner(), None)
+        actor.K2_TeleportTo(location, Rotator)
+
+    spawnpoint.K2_SetWorldLocation(originallocation, True, IGNORE_STRUCT, True)
+    spawnpoint.SpawnPoint.SetSpawnStyleTag(originalstyle)
+    return actor
+
 def SpawnInteractiveObject(Index: int, Location: None, Rotation: None) -> None:
     factory = find_class("SpawnFactory_OakInteractiveObject").ClassDefaultObject
     load_package(str(PackageInteractive[Index]))
