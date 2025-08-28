@@ -168,18 +168,68 @@ class CartelEvent(Effect):
             if mission.MissionClass.Name == "Mission_Season_02_Intro_C":
                 misson_class = mission.MissionClass
                 mission.Status= 1
-                mission.ObjectivesProgress= [1, 1, 0, 0, 0, 30, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-                mission.ActiveObjectiveSet= find_object('MissionObjectiveSet','/Game/PatchDLC/Event2/Missions/Side/Seasonal/Mission_Season_02_Intro.Set_ReachFrontGate_ObjectiveSet')
+                mission.ObjectivesProgress= [1, 1, 0, 0, 0, 30, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                mission.ActiveObjectiveSet= find_object('MissionObjectiveSet','/Game/PatchDLC/Event2/Missions/Side/Seasonal/Mission_Season_02_Intro.Set_GoToLeagueMap_ObjectiveSet')
                 mission.bKickoffPlayed= True
 
         self.pc.PlayerMissionComponent.ServerSetTrackedMission(misson_class)
         
-        TravelStationData = find_object('FastTravelStationData','/Game/PatchDLC/Event2/GameData/FastTravel/LevelTravelData/FTS_CartelHideout.FTS_CartelHideout')
+        Station = find_object('FastTravelStationData','/Game/GameData/FastTravel/FTS_Sanctuary.FTS_Sanctuary')
+        FastTravel:UObject
         for travel in find_all("FastTravelStationComponent"):
             if "Default" not in str(travel):
                 FastTravel = travel
                 break
-        
-        FastTravel.FastTravelToStation(self.pc.Pawn, TravelStationData, self.pc.Pawn)
+        FastTravel.FastTravelToStation(self.pc.Pawn, Station, self.pc.Pawn)
+        return super().run_effect()
+
+
+WeaponStatics = find_class("WeaponStatics").ClassDefaultObject
+class HideWeapons(Effect):
+    effect_name = "hide_weapons"
+    display_name = "Hide Weapons"
+
+    def run_effect(self):
+        WeaponStatics.HideWeapons(self.pc.Pawn, "CrowdControl_Weapons")
         return super().run_effect()
     
+    def stop_effect(self):
+        WeaponStatics.UnhideWeapons(self.pc.Pawn, "CrowdControl_Weapons")
+        return super().stop_effect()
+    
+GbxGameSystemCoreBlueprintLibrary = find_class("GbxGameSystemCoreBlueprintLibrary").ClassDefaultObject
+class DisableJumping(Effect):
+    effect_name = "disable_jumping"
+    display_name = "Disable Jumping"
+
+    def run_effect(self):
+        GbxGameSystemCoreBlueprintLibrary.ResourceLockJumping(self.pc.Pawn, "CrowdControl_Jumping")
+        return super().run_effect()
+    
+    def stop_effect(self):
+        GbxGameSystemCoreBlueprintLibrary.ResourceUnlockJumping(self.pc.Pawn, "CrowdControl_Jumping")
+        return super().stop_effect()
+    
+class DisableMantling(Effect):
+    effect_name = "disable_mantling"
+    display_name = "Disable Mantling"
+
+    def run_effect(self):
+        GbxGameSystemCoreBlueprintLibrary.ResourceLockMantling(self.pc.Pawn, "CrowdControl_Mantle")
+        return super().run_effect()
+    
+    def stop_effect(self):
+        GbxGameSystemCoreBlueprintLibrary.ResourceUnlockMantling(self.pc.Pawn, "CrowdControl_Mantle")
+        return super().stop_effect()    
+    
+class DisableCrouch(Effect):
+    effect_name = "disable_crouch"
+    display_name = "Disable Crouching"
+
+    def run_effect(self):
+        GbxGameSystemCoreBlueprintLibrary.ResourceLockCrouching(self.pc.Pawn, "CrowdControl_Crouch")
+        return super().run_effect()
+    
+    def stop_effect(self):
+        GbxGameSystemCoreBlueprintLibrary.ResourceUnlockCrouching(self.pc.Pawn, "CrowdControl_Crouch")
+        return super().stop_effect()

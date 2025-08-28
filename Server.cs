@@ -43,6 +43,10 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Size Steal", "size_steal") { Duration = 60 },
         new("Delete Ground Items", "delete_ground_items"),
         new("Enable Fall Damage", "fall_damage") { Duration = 60 },
+        new("Hide Weapons", "hide_weapons") { Duration = 60, Category = new EffectGrouping("Player Effects") },
+        new("Disable Jumping", "disable_jumping") { Duration = 60, Category = new EffectGrouping("Player Effects") },
+        new("Disable Mantling", "disable_mantling") { Duration = 60, Category = new EffectGrouping("Player Effects") },
+        new("Disable Crouching", "disable_crouch") { Duration = 60, Category = new EffectGrouping("Player Effects") },
 
     };
 }
