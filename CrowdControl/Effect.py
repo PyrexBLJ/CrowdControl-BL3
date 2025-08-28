@@ -1,8 +1,5 @@
-from random import randint, Random
-import time
-from mods_base import ENGINE
-from unrealsdk.unreal import UObject
-#from .comms import NotifyEffect
+from mods_base import ENGINE #type: ignore
+from unrealsdk.unreal import UObject #type: ignore
 
 
 class Effect:
@@ -21,19 +18,19 @@ class Effect:
         self.duration:int = 0
         self.args:list = []
         self.is_running:bool = False
-        self.thread = None
         self.pc:UObject
         self.start_time = None
+        self.viewer:str
+        self.viewers = None
+        self.sourcedetails = None
         
 
     def run_effect(self):
         print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
-        self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name} Started!", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+        self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         if self.duration:
             Effect.running_effects.append(self.effect_name)
             self.is_running = True
-            ...
-            #do duration shid
 
     def stop_effect(self):
         self.is_running = False
@@ -41,7 +38,7 @@ class Effect:
         from . import NotifyEffect
         NotifyEffect(self.id, "Finished", self.effect_name, self.pc)
         if self.duration:
-            self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name} Ended!", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
 
 
     def on_map_change(self):

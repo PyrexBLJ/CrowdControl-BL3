@@ -93,13 +93,15 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                 try:
                     message = json.loads(message_bytes.decode('utf-8'))
                 except Exception as e:
-                    print(f"CrowdControl: JSON parse error: {e}\n{message_bytes}")
+                    #print(f"CrowdControl: JSON parse error: {e}\n{message_bytes}")
                     continue
 
                 if message["type"] != 253:
-                    print(message)
                     eid = message["id"]
                     effect = message["code"]
+                    viewer = message.get("viewer", "None")
+                    viewers = message.get("viewers", None)
+                    sourcedetails = message.get("sourceDetails", None)
                     duration = message.get("duration", None)
                     parameters = message.get("parameters", None)
 
@@ -107,13 +109,13 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                         duration /= 1000
 
                     if duration and parameters:
-                        RequestEffect(eid, effect, get_pc(), duration, *parameters)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration, *parameters)
                     elif parameters:
-                        RequestEffect(eid, effect, get_pc(), *parameters)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, *parameters)
                     elif duration:
-                        RequestEffect(eid, effect, get_pc(), duration)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration)
                     else:
-                        RequestEffect(eid, effect, get_pc())
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails)
 
     except Exception as e:
         print(f"CrowdControl Socket Error: {e}")
@@ -172,7 +174,7 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
         print(f"CrowdControl: Failed to send response: {e}")
 
 
-def RequestEffect(eid, effect_name, pc, *args):
+def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
     extra_args = []
     
     if "spawnloot" in effect_name:
@@ -186,7 +188,7 @@ def RequestEffect(eid, effect_name, pc, *args):
         effect_name = "spawnenemy"
 
 
-    print(f"CrowdControl: Requesting effect {effect_name} with ID {eid}")
+    print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")
     from .Effect import Effect
     effect_cls = Effect.registry.get(effect_name)
 
@@ -198,6 +200,9 @@ def RequestEffect(eid, effect_name, pc, *args):
     effect_cls.id = eid
     effect_cls.args = list(args) + extra_args
     effect_cls.pc = pc
+    effect_cls.viewer = viewer
+    effect_cls.viewers = viewers
+    effect_cls.sourcedetails = source
 
     try:
         effect_cls.duration = int(args[0]) if args else 0
