@@ -148,8 +148,6 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
         request["pc"] = obj
         request["from_client"] = True
 
-        print(f"{get_pc()}, {request["pc"]}")
-
         if str(get_pc().PlayerState.PlayerID) == str(obj.PlayerState.PlayerID):
             #print("Got a client request from ourself, discard it.")
             return None
@@ -219,9 +217,7 @@ def CrowdControlFinishedDim(obj: UObject,args: WrappedStruct,ret: Any,func: Boun
 def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
     for inst in Effect.registry.values():
         if inst.is_running and inst.duration > 0:
-            print("found running times effect")
             if (inst.start_time + inst.duration) <= time.time():
-                print("stopping timed effect")
                 inst.stop_effect()
 
 

@@ -22,7 +22,8 @@ class NoGravity(Effect):
         return super().run_effect()
 
     def stop_effect(self):
-        GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 1.0
+        if AmIHost():
+            GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 1.0
         return super().stop_effect()
     
 class InstantDeath(Effect):
