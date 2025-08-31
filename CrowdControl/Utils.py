@@ -49,7 +49,6 @@ def SendToHost(effect:Effect) -> None:
     effectdict: str = json.dumps(efdict)
     b64effectdict = base64.b64encode(bytes(effectdict, 'utf-8'))
     efdict["pc"] = unrealsdk.find_object("Actor", efdict["pc"].split("'")[1])
-    print(b64effectdict.decode())
     effect.pc.ServerChangeName(f"CrowdControl-{effect.effect_name}-{b64effectdict.decode()}")
     return None
     

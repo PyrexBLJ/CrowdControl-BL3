@@ -9,10 +9,25 @@ timed = set()
 paused = set()
 
 
+def SetEffectStatus(code, status):
+    message = {"id": 0, "code": code, "status": status, "type": 1}
+    try:
+        from . import client_socket
+        if client_socket:
+            print(f"Status: {message}")
+            payload = json.dumps(message).encode("utf-8") + b"\x00"
+            client_socket.send(payload)
+        else:
+            print("CrowdControl: No active socket to send status response.")
+    except Exception as e:
+        print(f"CrowdControl: Failed to send status reponse: {e}")
+    return
+
+
 def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
 
     if pc != get_pc():
-        pc.ClientMessage(f"{eid}-{code}-{status}", "CrowdControl", float(pc.PlayerState.PlayerID))
+        pc.ClientMessage(f"{eid}-{status}-{code}", "CrowdControl", float(pc.PlayerState.PlayerID))
         return
 
     if status is None:
@@ -69,7 +84,7 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
 
     if not effect_cls:
         print(f"CrowdControl: Effect {effect_name} not found.")
-        NotifyEffect(eid, "Unavailable", effect_name)
+        NotifyEffect(eid, "Unavailable", effect_name, pc)
         return
 
     effect_cls.id = eid
@@ -88,7 +103,4 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
     effect_cls.run_effect()
 
     if effect_cls.duration > 0:
-        NotifyEffect(eid, "Success", effect_name, pc, effect_cls.duration * 1000)
         effect_cls.start_time = time.time()
-    else:
-        NotifyEffect(eid, "Finished", effect_name, pc)

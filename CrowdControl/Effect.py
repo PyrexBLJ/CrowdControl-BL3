@@ -1,5 +1,6 @@
 from mods_base import ENGINE #type: ignore
 from unrealsdk.unreal import UObject #type: ignore
+from .Comms import NotifyEffect
 import time
 
 
@@ -27,18 +28,25 @@ class Effect:
         self.from_client: bool = False
         
 
-    def run_effect(self):
+    def run_effect(self, response:str = "Success", respond:bool = True):
         print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
         self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         if self.duration:
             Effect.running_effects.append(self.effect_name)
             self.is_running = True
+            if response == "Finished":
+                response = "Success"
+            if respond:
+                NotifyEffect(self.id, response, self.effect_name, self.pc, self.duration * 1000)
+        else:
+            if respond:
+                NotifyEffect(self.id, response, self.effect_name, self.pc)
 
-    def stop_effect(self):
+    def stop_effect(self, response: str = "Finished", respond:bool = True): #available responses: https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-instance-messages
         self.is_running = False
         Effect.running_effects.remove(self.effect_name)
-        from . import NotifyEffect
-        NotifyEffect(self.id, "Finished", self.effect_name, self.pc)
+        if respond:
+            NotifyEffect(self.id, response, self.effect_name, self.pc)
         if self.duration:
             self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
 

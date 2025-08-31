@@ -94,6 +94,12 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                     continue
 
                 if message["type"] != 253:
+                    if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'"]:
+                        NotifyEffect(message["id"], "Failure", message["code"], get_pc())
+                        print("Crowd Control: Effect redeemed when it was not possible to activate, cancelled and viewer refunded.")
+                        return
+
+
                     eid = message["id"]
                     effect = message["code"]
                     viewer = message.get("viewer", "None")
@@ -187,7 +193,7 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
         
         response: list = args.S.split("-")
 
-        NotifyEffect(response[0], response[2], response[1]) #ngl idk the best way to deal with timeremaining yet
+        NotifyEffect(response[0], response[1], response[2], get_pc()) #ngl idk the best way to deal with timeremaining yet
 
     return None
 
@@ -218,6 +224,7 @@ def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFun
     for inst in Effect.registry.values():
         if inst.is_running and inst.duration > 0:
             if (inst.start_time + inst.duration) <= time.time():
+                print("stopping timed effect")
                 inst.stop_effect()
 
 

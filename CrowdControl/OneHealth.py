@@ -17,3 +17,7 @@ class SetOneHP(Effect):
         else:
             SendToHost(self)
         return super().run_effect()
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        #let it respond like normal
+        return super().stop_effect(response, respond)
