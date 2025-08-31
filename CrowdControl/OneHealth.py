@@ -1,7 +1,7 @@
 import unrealsdk
 from mods_base import get_pc, ENGINE
 from ui_utils import show_hud_message
-from .Utils import AmIHost, GetPlayerCharacter
+from .Utils import AmIHost, GetPlayerCharacter, SendToHost
 from .Effect import Effect
 
 
@@ -15,5 +15,5 @@ class SetOneHP(Effect):
             GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(1)
             #self.pc.DisplayRolloutNotification("Crowd Control", "Dont die", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         else:
-            get_pc().ServerChangeName(f"CrowdControl-{get_pc().PlayerState.PlayerID}-1_health-{self.id}")
+            SendToHost(self)
         return super().run_effect()

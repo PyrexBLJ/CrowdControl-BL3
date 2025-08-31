@@ -1,11 +1,13 @@
 from .Effect import Effect
-from .Utils import GetPlayerCharacter, AmIHost, SpawnEnemyEx
+from .Utils import GetPlayerCharacter, AmIHost, SpawnEnemyEx, SendToHost
 from mods_base import get_pc, ENGINE #type: ignore
 import unrealsdk #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
 import random
+import base64
+import json
 
 
 class NoGravity(Effect):
@@ -16,7 +18,7 @@ class NoGravity(Effect):
         if AmIHost():
             GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 0.0
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-no_gravity-{self.id}")
+            SendToHost(self)
         return super().run_effect()
 
     def stop_effect(self):
@@ -42,7 +44,7 @@ class InstantDeath(Effect):
                 GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(0)
                 GetPlayerCharacter(self.pc).BPFightForYourLifeComponent.DownStateTimeExpired(self.pc.OakCharacter.BPFightForYourLifeComponent.DownTimeResourcePool)
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-instant_death-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class DropEntireInventory(Effect):
@@ -60,7 +62,7 @@ class DropEntireInventory(Effect):
                     dropindex += 1
                 numofitems -= 1
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-drop_entire_inventory-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class DeleteGroundItems(Effect):
@@ -89,7 +91,7 @@ class DeleteGroundItems(Effect):
             self.display_name = f"{ognumberofitems - deleteindex} Items Deleted"
             combinedvalue = 0
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-delete_ground_items-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class FallDamage(Effect):
@@ -121,11 +123,12 @@ class FallDamage(Effect):
         if AmIHost():
             add_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook", self.dofalldamage)
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-fall_damage-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
     def stop_effect(self):
-        remove_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook")
+        if AmIHost():
+            remove_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook")
         return super().stop_effect()
     
 class DropHeldWeapon(Effect):
@@ -138,7 +141,7 @@ class DropHeldWeapon(Effect):
                 if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).ActiveWeapons.WeaponSlots[0].AttachedWeapon):
                     GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(item.Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-drop_held_weapon-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class DropEquippedShield(Effect):
@@ -151,7 +154,7 @@ class DropEquippedShield(Effect):
                 if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).EquippedInventory.InventorySlots[1].EquippedInventory):
                     GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(item.Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-drop_equipped_shield-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class NoAmmo(Effect):
@@ -165,7 +168,7 @@ class NoAmmo(Effect):
                     item.StoredActor.UseModeState[0].AmmoComponent.ResourcePool.PoolManager.ResourcePools[item.StoredActor.UseModeState[0].AmmoComponent.ResourcePool.PoolIndexInManager].CurrentValue = 0
                     item.StoredActor.UseModeState[0].AmmoComponent.LoadedAmmo = 0
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-no_ammo-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class ResetSkillTrees(Effect):
@@ -176,7 +179,7 @@ class ResetSkillTrees(Effect):
         if AmIHost():
             GetPlayerCharacter(self.pc).OakPlayerAbilityManager.PurchaseAbilityRespec()
         else:
-            self.pc.ServerChangeName(f"CrowdControl-{self.pc.PlayerState.PlayerID}-reset_skill_trees-{self.id}")
+            SendToHost(self)
         return super().run_effect()
     
 class ViewerBadass(Effect):

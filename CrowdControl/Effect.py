@@ -1,5 +1,6 @@
 from mods_base import ENGINE #type: ignore
 from unrealsdk.unreal import UObject #type: ignore
+import time
 
 
 class Effect:
@@ -15,14 +16,15 @@ class Effect:
     def __init__(self) -> None:
         self.id: int = -1
         self.effect_name:str
-        self.duration:int = 0
+        self.duration:float = 0.0
         self.args:list = []
         self.is_running:bool = False
         self.pc:UObject
-        self.start_time = None
+        self.start_time: float = time.time()
         self.viewer:str
         self.viewers = None
         self.sourcedetails = None
+        self.from_client: bool = False
         
 
     def run_effect(self):

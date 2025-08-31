@@ -1,11 +1,14 @@
 
-from mods_base import get_pc, ENGINE, hook
-from unrealsdk import find_object, make_struct, find_class, find_all, load_package
-from unrealsdk.unreal import UObject, BoundFunction, UObject, WrappedStruct,WeakPointer, IGNORE_STRUCT
-from unrealsdk.hooks import Type
+from mods_base import get_pc, ENGINE, hook #type: ignore
+from unrealsdk import find_object, make_struct, find_class, find_all, load_package #type: ignore
+from unrealsdk.unreal import UObject, BoundFunction, UObject, WrappedStruct,WeakPointer, IGNORE_STRUCT #type: ignore
+from unrealsdk.hooks import Type #type: ignore
+import unrealsdk #type: ignore
 from typing import Any
-from argparse import Namespace
+from .Effect import *
 import math
+import json
+import base64
 from .EnemySpawnerLists import Package,PackageName,EnemyName
 from .InteractiveObjectLists import PackageInteractive,PackageNameInteractive
 
@@ -37,6 +40,18 @@ def GetPlayerCharacter(player: UObject) -> UObject:
         return player.OakCharacter.Gunner
     else:
         return player.OakCharacter
+    
+
+
+def SendToHost(effect:Effect) -> None:
+    efdict = effect.__dict__
+    efdict["pc"] = str(efdict["pc"])
+    effectdict: str = json.dumps(efdict)
+    b64effectdict = base64.b64encode(bytes(effectdict, 'utf-8'))
+    efdict["pc"] = unrealsdk.find_object("Actor", efdict["pc"].split("'")[1])
+    print(b64effectdict.decode())
+    effect.pc.ServerChangeName(f"CrowdControl-{effect.effect_name}-{b64effectdict.decode()}")
+    return None
     
 
 LootPools = {

@@ -6,8 +6,8 @@ from mods_base import build_mod, hook #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type #type: ignore
 from typing import Any
-#from .comms import RequestEffect, NotifyEffect
 from .Utils import AmIHost, CrowdControl_PawnList_Possessed, CrowdControl_PawnList_Unpossessed
+from .Comms import *
 from .Effect import *
 from .OneHealth import *
 from .SharedEffects import *
@@ -34,9 +34,6 @@ wait_ticks = 0
 buffer = b""
 connecting = False
 
-effects = set()
-timed = set()
-paused = set()
 
 def connect_socket(host, port):
     global client_socket, do_reset, connecting
@@ -125,98 +122,7 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
         connecting = False
 
 
-def getResponseType(status: str) -> bytes:
-    statuses = ["Success", "Failure", "Unavailable", "Retry", "Queue", "Running", "Paused", "Resumed", "Finished"]
-    try:
-        return bytes([statuses.index(status)])
-    except ValueError:
-        return bytes([1])
 
-
-def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
-    global client_socket
-
-    if pc != get_pc():
-        print(pc)
-        pc.ClientMessage(f"{eid}-{code}-{status}", "CrowdControl", float(pc.PlayerState.PlayerID))
-        return
-
-    if status is None:
-        status = "Success"
-
-    if eid in effects:
-        effects.remove(eid)
-
-    message = {"id": eid, "status": status, "code": code, "type": 0}
-
-    if timeRemaining is not None:
-        print(f"CrowdControl: Responding with {status} with {timeRemaining} seconds remaining for effect with ID {eid}")
-        #message["timeRemaining"] = timeRemaining
-        timed.add(eid)
-    else:
-        print(f"CrowdControl: Responding with {status} for effect with ID {eid}")
-
-    if status == "Finished":
-        timed.discard(eid)
-        paused.discard(eid)
-    elif status == "Paused":
-        timed.add(eid)
-        paused.add(eid)
-
-    try:
-        if client_socket:
-            print(f"Response: {message}")
-            payload = json.dumps(message).encode("utf-8") + b"\x00"
-            client_socket.send(payload)
-        else:
-            print("CrowdControl: No active socket to send response.")
-    except Exception as e:
-        print(f"CrowdControl: Failed to send response: {e}")
-
-
-def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
-    extra_args = []
-    
-    if "spawnloot" in effect_name:
-        split_name = effect_name.split("_")
-        extra_args.extend(split_name[1:3])
-        effect_name = "spawnloot"
-    
-    if "spawnenemy" in effect_name:
-        split_name = effect_name.split("_")
-        extra_args.extend(split_name[1:3])
-        effect_name = "spawnenemy"
-
-
-    print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")
-    from .Effect import Effect
-    effect_cls = Effect.registry.get(effect_name)
-
-    if not effect_cls:
-        print(f"CrowdControl: Effect {effect_name} not found.")
-        NotifyEffect(eid, "Unavailable", effect_name)
-        return
-
-    effect_cls.id = eid
-    effect_cls.args = list(args) + extra_args
-    effect_cls.pc = pc
-    effect_cls.viewer = viewer
-    effect_cls.viewers = viewers
-    effect_cls.sourcedetails = source
-
-    try:
-        effect_cls.duration = int(args[0]) if args else 0
-    except Exception:
-        effect_cls.duration = 0
-
-    effects.add(eid)
-    effect_cls.run_effect()
-
-    if effect_cls.duration > 0:
-        NotifyEffect(eid, "Success", effect_name, pc, effect_cls.duration * 1000)
-        effect_cls.start_time = time.time()
-    else:
-        NotifyEffect(eid, "Finished", effect_name, pc)
 
 
 
@@ -234,24 +140,39 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
 #
 #   you can see an example of this being called in the OneHealth effect
 #
-    if "CrowdControl" in args.S:
-        request: list = args.S.split("-")
+    if "CrowdControl-" in args.S:
+        trimmedrequest: str = args.S
+        trimmedrequest = trimmedrequest.removeprefix("CrowdControl-")
+        b64request: list = trimmedrequest.split("-")
+        request = json.loads(base64.b64decode(b64request[1]).decode("utf-8"))
+        request["pc"] = obj
+        request["from_client"] = True
 
-        if str(get_pc().PlayerState.PlayerID) == request[1]:
-            #print("Got a client request from ourself, this really shouldnt happen.")
+        print(f"{get_pc()}, {request["pc"]}")
+
+        if str(get_pc().PlayerState.PlayerID) == str(obj.PlayerState.PlayerID):
+            #print("Got a client request from ourself, discard it.")
             return None
         
-        if request[4] != "None": # request[4] are the args
-            RequestEffect(request[3], request[2], obj, request[4])
+        eid = request["id"]
+        effect = b64request[0]
+        viewer = request.get("viewer", "None")
+        viewers = request.get("viewers", None)
+        sourcedetails = request.get("sourceDetails", None)
+        duration = request.get("duration", None)
+        parameters = request.get("args", None)
+
+        if duration:
+            duration /= 1000
+
+        if duration and parameters:
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, *parameters)
+        elif parameters:
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, *parameters)
+        elif duration:
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration)
         else:
-            RequestEffect(request[3], request[2], obj)
-
-        #if request[2] == "example_effect":
-            # do the effect stuff
-
-            #now we have to tell the client what we did, obj will be the clients player controller
-            #obj.ClientMessage(f"{request[3]}-{request[2]}-(Status)", "CrowdControl", float(request[1]))
-
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails)
 
     return None
 
@@ -298,7 +219,9 @@ def CrowdControlFinishedDim(obj: UObject,args: WrappedStruct,ret: Any,func: Boun
 def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
     for inst in Effect.registry.values():
         if inst.is_running and inst.duration > 0:
+            print("found running times effect")
             if (inst.start_time + inst.duration) <= time.time():
+                print("stopping timed effect")
                 inst.stop_effect()
 
 
