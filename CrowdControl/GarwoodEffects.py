@@ -62,12 +62,12 @@ class BarrelNet(Effect):
 
     def run_effect(self):
         if AmIHost():
-            PCLoc = get_pc().pawn.K2_GetActorLocation()
-            PCRot = get_pc().pawn.K2_GetActorRotation()
+            PCLoc = self.pc.pawn.K2_GetActorLocation()
+            PCRot = self.pc.pawn.K2_GetActorRotation()
             OffSet = 600
             OffSetAmount: list = [make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + 0, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300)]
             for AddOffset in OffSetAmount:
-                SpawnInteractiveObject(1,AddOffset,PCRot)
+                SpawnInteractiveObject(0,AddOffset,PCRot)
         else:
             SendToHost(self)
             return super().run_effect()
