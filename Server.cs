@@ -23,7 +23,6 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
     public override EffectList Effects => new Effect[]
     {
         new("1 Health", "1_health"),
-        new("Barrel Troll", "barrel_troll"),
         new("No Gravity", "no_gravity") { Duration = 30 },
         new("Oops All Psychos", "oops_all_psychos") { Duration =  300 },
         new("Spawn Legendary Weapon", "spawnloot_legendaryweapon_1") { Category = new EffectGrouping("Spawn Loot") },
@@ -52,6 +51,8 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Empty Weapon Ammo", "no_ammo"),
         new("Reset Skill Trees", "reset_skill_trees"),
         new("Viewer Badass", "viewer_badass"),
-
+        new("Fast Game Speed", "fast_game_speed") { Duration = 30 },
+        new("Slow Game Speed", "slow_game_speed") { Duration = 30 },
+        new("Fly", "fly_mode") { Duration = 60 },
     };
 }

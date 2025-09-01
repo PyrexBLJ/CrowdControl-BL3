@@ -213,7 +213,7 @@ class ViewerBadass(Effect):
         if viewer_badass_cooldown_enabled == True:
             if (viewer_badass_cooldown_start_time + (get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents * 60)) <= time.time():
                 print("viewer badass cooldown over, reenabling")
-                SetEffectStatus("viewer_badass", 0x82)
+                SetEffectStatus("viewer_badass", 0x82, self.pc)
                 viewer_badass_cooldown_enabled = False
                 remove_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown")
         return None
@@ -231,12 +231,12 @@ class ViewerBadass(Effect):
         return None
 
     def run_effect(self):
+        global viewer_badass_cooldown_enabled
+        if viewer_badass_cooldown_enabled:
+            NotifyEffect(self.id, "Failure", self.effect_name, self.pc)
+            return
+        
         if AmIHost():
-            global viewer_badass_cooldown_enabled
-            if viewer_badass_cooldown_enabled:
-                NotifyEffect(self.id, "Failure", self.effect_name, self.pc)
-                return
-
             self.display_name = f"Summoning {self.viewer}"
             actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
             if actor != None:
@@ -249,7 +249,7 @@ class ViewerBadass(Effect):
                 actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
                 actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
                 self.viewer_pawn = actor
-                SetEffectStatus(self.effect_name, 0x83) # disable viewer badass button in the twitch integration for viewers until cooldown is done https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-class-messages
+                SetEffectStatus(self.effect_name, 0x83, self.pc) # disable viewer badass button in the twitch integration for viewers until cooldown is done https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-class-messages
                 add_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check", self.trackdeaths)
                 return super().run_effect()
             else:
@@ -257,3 +257,55 @@ class ViewerBadass(Effect):
         else:
             SendToHost(self)
             return super().run_effect()
+        
+class FastGameSpeed(Effect):
+    effect_name = "fast_game_speed"
+    display_name = "4x Speed"
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 4.0
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        if AmIHost():
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 1.0
+        return super().stop_effect(response, respond)
+    
+class SlowGameSpeed(Effect):
+    effect_name = "slow_game_speed"
+    display_name = "0.5x Speed"
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 0.5
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        if AmIHost():
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 1.0
+        return super().stop_effect(response, respond)
+    
+class FlyMode(Effect):
+    effect_name = "fly_mode"
+    display_name = "I can fly!"
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MovementMode = 5
+            GetPlayerCharacter(self.pc).OakDamageComponent.MinimumDamageLaunchVelocity = 9999999999
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MaxFlySpeed.Value = 5000
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        if AmIHost():
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MovementMode = 1
+            GetPlayerCharacter(self.pc).OakDamageComponent.MinimumDamageLaunchVelocity = 370
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MaxFlySpeed.Value = 600
+        return super().stop_effect(response, respond)
