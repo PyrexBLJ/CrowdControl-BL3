@@ -1,4 +1,5 @@
-from mods_base import get_pc #type: ignore
+from mods_base import get_pc, ENGINE #type: ignore
+from unrealsdk.unreal import UObject #type: ignore
 import json
 import time
 import socket
@@ -10,18 +11,21 @@ paused = set()
 effect_instances = set()
 
 
-def SetEffectStatus(code, status):
-    message = {"id": 0, "code": code, "status": status, "type": 1}
-    try:
-        from . import client_socket
-        if client_socket:
-            print(f"Status: {message}")
-            payload = json.dumps(message).encode("utf-8") + b"\x00"
-            client_socket.send(payload)
-        else:
-            print("CrowdControl: No active socket to send status response.")
-    except Exception as e:
-        print(f"CrowdControl: Failed to send status reponse: {e}")
+def SetEffectStatus(code, status, pc:UObject):
+    if pc.PlayerState == ENGINE.GameViewport.World.GameState.HostPlayerState:
+        message = {"id": 0, "code": code, "status": status, "type": 1}
+        try:
+            from . import client_socket
+            if client_socket:
+                print(f"Status: {message}")
+                payload = json.dumps(message).encode("utf-8") + b"\x00"
+                client_socket.send(payload)
+            else:
+                print("CrowdControl: No active socket to send status response.")
+        except Exception as e:
+            print(f"CrowdControl: Failed to send status reponse: {e}")
+    else:
+        pc.ClientMessage(f"{code}-{status}", "CCEffectStatus", float(pc.PlayerState.PlayerID))
     return
 
 

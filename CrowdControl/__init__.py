@@ -192,6 +192,20 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
         response: list = args.S.split("-")
 
         NotifyEffect(response[0], response[1], response[2], get_pc()) #ngl idk the best way to deal with timeremaining yet
+        
+    if args.type == "CCEffectStatus":
+        response: list = args.S.split("-")
+        message = {"id": 0, "code": response[0], "status": int(response[1]), "type": 1}
+        try:
+            from . import client_socket
+            if client_socket:
+                print(f"Status: {message}")
+                payload = json.dumps(message).encode("utf-8") + b"\x00"
+                client_socket.send(payload)
+            else:
+                print("CrowdControl: No active socket to send status response.")
+        except Exception as e:
+            print(f"CrowdControl: Failed to send status reponse: {e}")
 
     return None
 
