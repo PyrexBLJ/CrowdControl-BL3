@@ -68,7 +68,6 @@ class BarrelNet(Effect):
             OffSetAmount: list = [make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + 0, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300)]
             for AddOffset in OffSetAmount:
                 SpawnInteractiveObject(1,AddOffset,PCRot)
-            return super().run_effect()
         else:
             SendToHost(self)
             return super().run_effect()
