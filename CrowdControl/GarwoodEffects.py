@@ -5,7 +5,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
 from unrealsdk import make_struct
-from .Utils import SpawnInteractiveObject,AmIHost
+from .Utils import SpawnInteractiveObject,AmIHost,SendToHost
 
 class SuperHot(Effect):
 
