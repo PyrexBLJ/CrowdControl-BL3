@@ -1,6 +1,6 @@
 from .Effect import Effect
 from .Utils import GetPlayerCharacter, AmIHost, SpawnEnemyEx, SendToHost
-from .Comms import SetEffectStatus
+from .Comms import SetEffectStatus, NotifyEffect
 from mods_base import get_pc, ENGINE #type: ignore
 import unrealsdk #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
@@ -209,7 +209,7 @@ class ViewerBadass(Effect):
         if viewer_badass_cooldown_enabled == True:
             if (viewer_badass_cooldown_start_time + (get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents * 60)) <= time.time():
                 print("viewer badass cooldown over, reenabling")
-                SetEffectStatus("viewer_badass", 130)
+                SetEffectStatus("viewer_badass", 0x82)
                 viewer_badass_cooldown_enabled = False
                 remove_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown")
         return None
@@ -221,29 +221,35 @@ class ViewerBadass(Effect):
             viewer_badass_cooldown_enabled = True
             print("starting viewer badass cooldown")
             self.display_name = f"{self.viewer} Died"
+            self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}. {get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents} Minute Cooldown Started.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
             add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown", self.cooldown)
             remove_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check")
         return None
 
     def run_effect(self):
-        global viewer_badass_cooldown_enabled
-        if viewer_badass_cooldown_enabled:
-            super().stop_effect("Failure")
+        if AmIHost():
+            global viewer_badass_cooldown_enabled
+            if viewer_badass_cooldown_enabled:
+                NotifyEffect(self.id, "Failure", self.effect_name, self.pc)
+                return
 
-        self.display_name = f"Summoning {self.viewer}"
-        actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
-        if actor != None:
-            print(actor)
-            sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
-            lvl = actor.AIBalanceState.GetExperienceLevel()
-            actor.AIBalanceState.SetExperienceLevel(lvl + 2)
-            sed.SetEventEnemy(actor)
-            sed.SetEventEnemyName(self.viewer)
-            actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
-            actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
-            self.viewer_pawn = actor
-            SetEffectStatus(self.effect_name, 131) # disable viewer badass button in the twitch integration for viewers until cooldown is done https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-class-messages
-            add_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check", self.trackdeaths)
-            return super().run_effect()
+            self.display_name = f"Summoning {self.viewer}"
+            actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
+            if actor != None:
+                print(actor)
+                sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
+                lvl = actor.AIBalanceState.GetExperienceLevel()
+                actor.AIBalanceState.SetExperienceLevel(lvl + 2)
+                sed.SetEventEnemy(actor)
+                sed.SetEventEnemyName(self.viewer)
+                actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
+                actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
+                self.viewer_pawn = actor
+                SetEffectStatus(self.effect_name, 0x83) # disable viewer badass button in the twitch integration for viewers until cooldown is done https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-class-messages
+                add_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check", self.trackdeaths)
+                return super().run_effect()
+            else:
+                return super().run_effect("Failure")
         else:
-            return super().run_effect("Retry")
+            SendToHost(self)
+            return super().run_effect()

@@ -2,6 +2,7 @@ import socket
 import time
 import select
 import json
+import base64
 from mods_base import build_mod, hook #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type #type: ignore
