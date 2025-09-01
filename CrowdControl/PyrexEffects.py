@@ -8,7 +8,11 @@ from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
 import random
 import time
-
+#
+#
+#   number of near crash outs trying to get comms and coop working properly: 3
+#
+#
 viewer_badass_cooldown_enabled: bool = False
 viewer_badass_cooldown_start_time: float = 0.0
 
