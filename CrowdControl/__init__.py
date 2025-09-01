@@ -165,10 +165,7 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
         viewers = request.get("viewers", None)
         sourcedetails = request.get("sourceDetails", None)
         duration = request.get("duration", None)
-        parameters = request.get("args", None)
-
-        if duration:
-            duration /= 1000
+        parameters = request.get("parameters", None)
 
         if duration and parameters:
             RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, *parameters)
@@ -205,7 +202,8 @@ def CrowdControlLoadedMap(obj: UObject,args: WrappedStruct,ret: Any,func: BoundF
     if "loader" in NewMap.lower() or "fakeentry" in NewMap.lower():
         return
     
-    for inst in Effect.registry.values():
+    global effect_instances
+    for inst in effect_instances:
         if inst.is_running:
             inst.on_map_change()
 
@@ -214,19 +212,25 @@ def CrowdControlLoadedMap(obj: UObject,args: WrappedStruct,ret: Any,func: BoundF
 
 @hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.POST)
 def CrowdControlFinishedDim(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
-    for inst in Effect.registry.values():
+    global effect_instances
+    for inst in effect_instances:
         if inst.is_running:
             inst.map_change_finalized()
     CrowdControlFinishedDim.disable()
 
 
-@hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE)
+@hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, hook_identifier="MainCCDrawHUDHook")
 def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
-    for inst in Effect.registry.values():
+    global effect_instances
+    effects_to_remove: list = []
+    for inst in effect_instances:
         if inst.is_running and inst.duration > 0:
             if (inst.start_time + inst.duration) <= time.time():
                 print("stopping timed effect")
+                effects_to_remove.append(inst)
                 inst.stop_effect()
+    for e in effects_to_remove:
+        effect_instances.remove(e)
 
 
 build_mod()

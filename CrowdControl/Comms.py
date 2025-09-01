@@ -2,11 +2,12 @@ from mods_base import get_pc #type: ignore
 import json
 import time
 import socket
-
+from copy import deepcopy
 
 effects = set()
 timed = set()
 paused = set()
+effect_instances = set()
 
 
 def SetEffectStatus(code, status):
@@ -77,10 +78,13 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
         extra_args.extend(split_name[1:3])
         effect_name = "spawnenemy"
 
-
+    effect_cls = None
     print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")
     from .Effect import Effect
-    effect_cls = Effect.registry.get(effect_name)
+    for c in Effect.registry.values():
+        if c.effect_name == effect_name:
+            effect_cls = deepcopy(c)
+    #effect_cls = Effect.registry.get(effect_name).__new__()
 
     if not effect_cls:
         print(f"CrowdControl: Effect {effect_name} not found.")
@@ -99,6 +103,7 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
     except Exception:
         effect_cls.duration = 0
 
+    effect_instances.add(effect_cls)
     effects.add(eid)
     effect_cls.run_effect()
 

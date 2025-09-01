@@ -1,6 +1,6 @@
 from mods_base import ENGINE, get_pc #type: ignore
 from unrealsdk.unreal import UObject #type: ignore
-from .Comms import NotifyEffect
+from .Comms import NotifyEffect, effect_instances
 import time
 
 
@@ -41,12 +41,16 @@ class Effect:
             if respond:
                 NotifyEffect(self.id, response, self.effect_name, self.pc, self.duration * 1000)
         else:
+            global effect_instances
+            effect_instances.remove(self)
             if respond:
                 NotifyEffect(self.id, response, self.effect_name, self.pc)
 
     def stop_effect(self, response: str = "Finished", respond:bool = True): #available responses: https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-instance-messages
         self.is_running = False
         Effect.running_effects.remove(self.effect_name)
+        #global effect_instances
+        #effect_instances.remove(self)
         if not get_pc().PlayerState == ENGINE.GameViewport.World.GameState.HostPlayerState:
             respond = False
         if respond:

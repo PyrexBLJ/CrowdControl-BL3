@@ -10,7 +10,7 @@ import random
 import time
 #
 #
-#   number of near crash outs trying to get comms and coop working properly: 3
+#   number of near crash outs trying to get comms and coop working properly: 4
 #
 #
 viewer_badass_cooldown_enabled: bool = False
