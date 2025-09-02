@@ -71,4 +71,4 @@ class BarrelNet(Effect):
                 SpawnInteractiveObject(0,net,PCRot)
         else:
             SendToHost(self)
-            return super().run_effect()
+        return super().run_effect()
