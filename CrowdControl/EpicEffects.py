@@ -3,7 +3,7 @@ import random
 from mods_base import get_pc, ENGINE
 from unrealsdk import find_object, make_struct, find_all, find_class
 from ui_utils import show_hud_message
-from .Utils import AmIHost, GetPlayerCharacter
+from .Utils import AmIHost, GetPlayerCharacter, SendToHost
 from .Effect import Effect
 
 
@@ -18,5 +18,22 @@ class HighsLows(Effect):
             rot = self.pc.pawn.K2_GetActorRotation()
             self.pc.Pawn.K2_TeleportTo(loc,rot)
         else:
-            get_pc().ServerChangeName(f"CrowdControl-{get_pc().PlayerState.PlayerID}-HighsLows-{self.id}")
+            SendToHost(self)
         return super().run_effect()
+
+class NoSplash(Effect):
+    effect_name = "NoSplash"
+    display_name = "No Splash Damage"
+    def run_effect(self):
+        if AmIHost():
+            GetPlayerCharacter(self.pc).OakDamageComponent.RadiusDamageTakenMultiplier.Value = 0
+            GetPlayerCharacter(self.pc).OakDamageComponent.RadiusDamageTakenMultiplier.BaseValue = 0
+        else:
+            SendToHost(self)
+        return super().run_effect()
+    
+    def stop_effect(self):
+        if AmIHost():
+            GetPlayerCharacter(self.pc).OakDamageComponent.RadiusDamageTakenMultiplier.Value = 1
+            GetPlayerCharacter(self.pc).OakDamageComponent.RadiusDamageTakenMultiplier.BaseValue = 1
+        return super().stop_effect()
