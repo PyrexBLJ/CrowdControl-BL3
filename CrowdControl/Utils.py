@@ -1,6 +1,6 @@
 
 from mods_base import get_pc, ENGINE, hook #type: ignore
-from unrealsdk import find_object, make_struct, find_class, find_all, load_package #type: ignore
+from unrealsdk import find_object, make_struct, find_class, find_all, load_package, construct_object #type: ignore
 from unrealsdk.unreal import UObject, BoundFunction, UObject, WrappedStruct,WeakPointer, IGNORE_STRUCT #type: ignore
 from unrealsdk.hooks import Type #type: ignore
 import unrealsdk #type: ignore
@@ -108,7 +108,7 @@ library = find_object("Object", "/Script/GbxSpawn.Default__SpawnerBlueprintLibra
 
 
 def get_spawn_point() -> UObject | None:
-    OakSpawnPoint = unrealsdk.construct_object("OakSpawnPoint", outer=ENGINE.GameViewport.World.CurrentLevel.OwningWorld.PersistentLevel)
+    OakSpawnPoint = construct_object("OakSpawnPoint", outer=ENGINE.GameViewport.World.CurrentLevel.OwningWorld.PersistentLevel)
     OakSpawnPoint.RootComponent.AttachChildren.append(OakSpawnPoint.SpawnPointComponent)
     return OakSpawnPoint.SpawnPointComponent
 
@@ -195,3 +195,8 @@ def SpawnInteractiveObject(Index: int, Location: None, Rotation: None) -> None:
     spawnpoint.K2_SetWorldLocation(Location, True,IGNORE_STRUCT, True)
     spawnpoint.K2_SetWorldRotation(Rotation, True,IGNORE_STRUCT, True)
     actor = library.SpawnActorWithSpawner(get_pc(), factory, spawnpoint, get_spawner(), None)
+    return actor
+
+def Net(Location: None, OffSet: 600 , ZOffSet: 300) -> None:
+    Netlist: list = [make_struct("Vector", X=Location.X + OffSet, Y=Location.Y + 0, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + -OffSet, Y=Location.Y + 0, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + 0, Y=Location.Y + OffSet, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + 0, Y=Location.Y + -OffSet, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + 0, Y=Location.Y + 0, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + -OffSet, Y=Location.Y + OffSet, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + -OffSet, Y=Location.Y + -OffSet, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + OffSet, Y=Location.Y + -OffSet, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + OffSet, Y=Location.Y + OffSet, Z=Location.Z+ZOffSet)]
+    return Netlist

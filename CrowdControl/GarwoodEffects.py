@@ -5,7 +5,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
 from unrealsdk import make_struct
-from .Utils import SpawnInteractiveObject,AmIHost,SendToHost
+from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net
 
 class SuperHot(Effect):
 
@@ -13,7 +13,10 @@ class SuperHot(Effect):
     display_name = "Super Hot"
 
     def run_effect(self):
-        add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "speed_change", self.speed_change)
+        if AmIHost():
+            add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "speed_change", self.speed_change)
+        else:
+            SendToHost(self)
         return super().run_effect()
 
     def speed_change(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
@@ -62,12 +65,10 @@ class BarrelNet(Effect):
 
     def run_effect(self):
         if AmIHost():
-            PCLoc = self.pc.pawn.K2_GetActorLocation()
             PCRot = self.pc.pawn.K2_GetActorRotation()
-            OffSet = 600
-            OffSetAmount: list = [make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + 0, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300),make_struct("Vector", X=PCLoc.X + 0, Y=PCLoc.Y + 0, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + -OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + -OffSet, Z=PCLoc.Z+300), make_struct("Vector", X=PCLoc.X + OffSet, Y=PCLoc.Y + OffSet, Z=PCLoc.Z+300)]
-            for AddOffset in OffSetAmount:
-                SpawnInteractiveObject(0,AddOffset,PCRot)
+            PCLoc = Net(self.pc.pawn.K2_GetActorLocation(),600,300)
+            for net in PCLoc:
+                SpawnInteractiveObject(0,net,PCRot)
         else:
             SendToHost(self)
             return super().run_effect()
