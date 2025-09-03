@@ -54,5 +54,6 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Fast Game Speed", "fast_game_speed") { Duration = 30 },
         new("Slow Game Speed", "slow_game_speed") { Duration = 30 },
         new("Fly", "fly_mode") { Duration = 60 },
+        new("Hype Train (remove this before shipping i think)", "event-hype-train"),
     };
 }
