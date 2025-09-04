@@ -242,8 +242,8 @@ class ViewerBadass(Effect):
             if actor != None:
                 print(actor)
                 sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
-                lvl = actor.AIBalanceState.GetExperienceLevel()
-                actor.AIBalanceState.SetExperienceLevel(lvl + 2)
+                actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
+                actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
                 sed.SetEventEnemy(actor)
                 sed.SetEventEnemyName(self.viewer)
                 actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))

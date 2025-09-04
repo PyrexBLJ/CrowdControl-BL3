@@ -5,7 +5,7 @@ from mods_base import get_pc, ENGINE #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
-from .Utils import SpawnLoot, SpawnEnemy, SpawnEnemyEx, AmIHost, SendToHost
+from .Utils import SpawnLoot, SpawnEnemy, SpawnEnemyEx, AmIHost, SendToHost, GetPlayerCharacter
 from random import randint
 
 
@@ -106,9 +106,8 @@ class HypeTrain(Effect):
                 print(actor)
                 spawned_friendlies.append(str(actor))
 
-                oldlvl = actor.AIBalanceState.ExperienceLevel
-                actor.AIBalanceState.SetGameStage(oldlvl + 5)
-                actor.AIBalanceState.SetExperienceLevel(oldlvl + 5)
+                actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel + 5)
+                actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel + 5)
 
                 try:
                     actor.DamageCauserComponent.DamageDealtMultiplier.Value = 2.0

@@ -3,7 +3,7 @@ import time
 import select
 import json
 import base64
-from mods_base import build_mod, hook #type: ignore
+from mods_base import build_mod, hook, ButtonOption #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type #type: ignore
 from typing import Any
@@ -35,6 +35,7 @@ wait_ticks = 0
 buffer = b""
 connecting = False
 
+ResetConnection: ButtonOption = ButtonOption("Reset Connection To CC App", on_press = lambda _: connect_socket(host, port), description="If you didnt get the \"CrowdControl: Connected!\" message in the console (from opening the game before the cc app for example) click this button to retry the connection.")
 
 def connect_socket(host, port):
     global client_socket, do_reset, connecting
