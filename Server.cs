@@ -31,6 +31,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Meet Lilith on the Bridge", "report_to_lilith") { Duration = 30 },
         new("Silly Scales", "silly_scales") { Duration = 300 },
         new("Spawn Loot Tink", "spawnenemy_loottink_1") { Category = new EffectGrouping("Spawn Enemies") },
+        new("BEES!", "spawnenemy_ratchswarm_20") { Category = new EffectGrouping("Spawn Enemies") },
         new("Start Bloody Harvest", "harvest_event") { Category = new EffectGrouping("Events") },
         new("Start Revenge Of The Cartels", "cartel_event") { Duration = 300, Category = new EffectGrouping("Events") },
         new("Instant Death", "instant_death"),

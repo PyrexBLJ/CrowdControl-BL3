@@ -121,9 +121,10 @@ def get_spawner() -> UObject | None:
 
 
 EnemiesDict = {
-    "loottink": "Loot Tink"
+    "loottink": "Loot Tink",
+    "ratchswarm": "Ratch Swarm",
 }
-
+import random 
 def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = "") -> bool:
     EnemyToSpawn = EnemiesDict[EnemyToSpawn]
     Index = EnemyName.index(EnemyToSpawn)
@@ -146,8 +147,28 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = ""
 
     Rotator = make_struct("Rotator", Roll =0, Pitch=0, Yaw=PCRot.Yaw-180)     
 
+
+    spread_radius = 800
+
     for i in range(AmountToSpawn):
-        location = make_struct("Vector", X=PCLoc.X + 500 * math.cos(math.radians((PCRot.Yaw))), Y=PCLoc.Y + 500 * math.sin(math.radians((PCRot.Yaw))), Z=PCLoc.Z + (i * 200))
+        if i == 0:
+            location = make_struct(
+                "Vector",
+                X=PCLoc.X + 500 * math.cos(math.radians(PCRot.Yaw)),
+                Y=PCLoc.Y + 500 * math.sin(math.radians(PCRot.Yaw)),
+                Z=PCLoc.Z
+            )
+        else:
+            offset_x = random.uniform(-spread_radius, spread_radius)
+            offset_y = random.uniform(-spread_radius, spread_radius)
+
+            location = make_struct(
+                "Vector",
+                X=PCLoc.X + offset_x,
+                Y=PCLoc.Y + offset_y,
+                Z=PCLoc.Z
+            )
+
         spawnpoint.K2_SetWorldLocation(location, True, IGNORE_STRUCT, True)
         spawnpoint.K2_SetWorldRotation(Rotator, True, IGNORE_STRUCT, True)
         actor = library.SpawnActorWithSpawner(PC, factory, spawnpoint, get_spawner(), None)
