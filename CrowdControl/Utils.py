@@ -158,17 +158,19 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = ""
 
     return True
 
-def SpawnEnemyEx(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> UObject:
+def SpawnEnemyEx(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, is_friendly:bool = False) -> UObject:
     Index = EnemyName.index(EnemyToSpawn)
-    #for i in range(len(PackageName)):
-    #    if str(EnemyToSpawn).lower() in str().lower():
-    #        Index = i
-    #        break
 
     if Index == -1:
         return None
 
     factory = find_class("SpawnFactory_OakAI").ClassDefaultObject
+
+    if is_friendly:
+        factory.TeamOverride = unrealsdk.find_object("Team", "/Game/Common/_Design/Teams/Team_Players.Team_Players")
+    else:
+        factory.TeamOverride = unrealsdk.find_object("Team", "/Game/Common/_Design/Teams/Team_Enemies.Team_Enemies")
+
     load_package(str(Package[Index]))
     factory.AIActorClass = find_object("BlueprintGeneratedClass", str(PackageName[Index]))
 
@@ -184,6 +186,8 @@ def SpawnEnemyEx(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject) -> UObject:
         spawnpoint.K2_SetWorldLocation(location, True, IGNORE_STRUCT, True)
         spawnpoint.K2_SetWorldRotation(Rotator, True, IGNORE_STRUCT, True)
         actor = library.SpawnActorWithSpawner(PC, factory, spawnpoint, get_spawner(), None)
+    
+    factory.TeamOverride = None
 
     return actor
 

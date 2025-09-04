@@ -59,11 +59,10 @@ class HypeTrain(Effect):
     display_name = "Hype Train"
 
     possible_enemies = ["Badass CryptoSec Commando", 
-                        "Badass Goliath", 
+                        "The Holy Dumptruck", 
                         "Badass Psycho", 
                         "Badass Jabber", 
                         "Badass Wardog", 
-                        "Badass Wraith",  
                         "Badass Major",
                         "Badass Loader",
                         "Super Badass Marauder",
@@ -101,13 +100,32 @@ class HypeTrain(Effect):
             possible_names.append(self.sourcedetails["last_contribution"]["user_name"])
 
             try:
-                actor = SpawnEnemyEx(self.possible_enemies[randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
+                actor = SpawnEnemyEx(self.possible_enemies[randint(0, len(self.possible_enemies) - 1)], 1, self.pc, True)
                 if actor == None:
                     return super().run_effect("Failed", respond)
                 print(actor)
                 spawned_friendlies.append(str(actor))
-                lvl = actor.AIBalanceState.GetExperienceLevel()
-                actor.AIBalanceState.SetExperienceLevel(lvl + 3)
+
+                oldlvl = actor.AIBalanceState.ExperienceLevel
+                actor.AIBalanceState.SetGameStage(oldlvl + 5)
+                actor.AIBalanceState.SetExperienceLevel(oldlvl + 5)
+
+                try:
+                    actor.DamageCauserComponent.DamageDealtMultiplier.Value = 2.0
+                    actor.DamageCauserComponent.DamageDealtMultiplier.BaseValue = 2.0
+                    actor.DamageCauserComponent.StatusEffectDamageModifierScalar.Value = 2.0
+                    actor.DamageCauserComponent.StatusEffectDamageModifierScalar.BaseValue = 2.0
+                except:
+                    pass
+
+                try:
+                    actor.OakDamageCauserComponent.DamageDealtMultiplier.Value = 2.0
+                    actor.OakDamageCauserComponent.DamageDealtMultiplier.BaseValue = 2.0
+                    actor.OakDamageCauserComponent.StatusEffectDamageModifierScalar.Value = 2.0
+                    actor.OakDamageCauserComponent.StatusEffectDamageModifierScalar.BaseValue = 2.0
+                except:
+                    pass
+
                 name = construct_object("GbxUIName", outer=ENGINE.Outer)
 
                 name_found: bool = False
