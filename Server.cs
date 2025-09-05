@@ -58,5 +58,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         //new("Hype Train (remove this before shipping i think)", "event-hype-train"),
         new("Full Ammo", "full_ammo"),
         new("Vendor Box", "vendor_box"),
+        new("Give 5k Eridium", "givecurrency_Eridium_5000"),
+        new("Give 5m Cash", "givecurrency_Cash_5000000"),
     };
 }

@@ -82,6 +82,11 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
         extra_args.extend(split_name[1:3])
         effect_name = "spawnenemy"
 
+    if "givecurrency" in effect_name:
+        split_name = effect_name.split("_")
+        extra_args.extend(split_name[1:3])
+        effect_name = "givecurrency"
+
     effect_cls = None
     print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")
     from .Effect import Effect
