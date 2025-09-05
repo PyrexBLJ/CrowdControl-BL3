@@ -12,7 +12,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
 
     public override Game Game => new("Borderlands 3", "borderlands3", "PC", ConnectorType.SimpleTCPServerConnector);
 
-    protected override string ProcessName => "Borderlands3.ex";
+    protected override string ProcessName => "Borderlands3.exe";
 
     public override string Host => "127.0.0.1";
 
@@ -28,12 +28,12 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Spawn Legendary Weapon", "spawnloot_legendaryweapon_1") { Category = new EffectGrouping("Spawn Loot") },
         new("Launch Player", "launch_player"),
         new("Clutter Backpack", "clutter_inventory"),
-        new("Meet Lilith on the Bridge", "report_to_lilith") { Duration = 30 },
+        //new("Meet Lilith on the Bridge", "report_to_lilith") { Duration = 30 },
         new("Silly Scales", "silly_scales") { Duration = 300 },
         new("Spawn Loot Tink", "spawnenemy_loottink_1") { Category = new EffectGrouping("Spawn Enemies") },
         new("BEES!", "spawnenemy_ratchswarm_20") { Category = new EffectGrouping("Spawn Enemies") },
-        new("Start Bloody Harvest", "harvest_event") { Category = new EffectGrouping("Events") },
-        new("Start Revenge Of The Cartels", "cartel_event") { Duration = 300, Category = new EffectGrouping("Events") },
+        //new("Start Bloody Harvest", "harvest_event") { Category = new EffectGrouping("Events") },
+        //new("Start Revenge Of The Cartels", "cartel_event") { Duration = 300, Category = new EffectGrouping("Events") },
         new("Instant Death", "instant_death"),
         new("Drop Entire Inventory", "drop_entire_inventory"),
         new("Spawn Vehicle", "spawn_vehicle"),
