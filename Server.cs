@@ -39,7 +39,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Spawn Vehicle", "spawn_vehicle"),
         new("Highs And Lows", "HighsLows"),
         new("Super Hot", "super_hot") { Duration = 60 },
-        new("Size Steal", "size_steal") { Duration = 60 },
+        //new("Size Steal", "size_steal") { Duration = 60 },
         new("Delete Ground Items", "delete_ground_items"),
         new("Enable Fall Damage", "fall_damage") { Duration = 60 },
         new("Hide Weapons", "hide_weapons") { Duration = 60, Category = new EffectGrouping("Player Effects") },
@@ -55,6 +55,7 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Fast Game Speed", "fast_game_speed") { Duration = 30 },
         new("Slow Game Speed", "slow_game_speed") { Duration = 30 },
         new("Fly", "fly_mode") { Duration = 60 },
-        new("Hype Train (remove this before shipping i think)", "event-hype-train"),
+        //new("Hype Train (remove this before shipping i think)", "event-hype-train"),
+        new("Full Ammo", "full_ammo"),
     };
 }

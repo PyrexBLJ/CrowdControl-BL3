@@ -309,3 +309,16 @@ class FlyMode(Effect):
             GetPlayerCharacter(self.pc).OakDamageComponent.MinimumDamageLaunchVelocity = 370
             GetPlayerCharacter(self.pc).OakCharacterMovement.MaxFlySpeed.Value = 600
         return super().stop_effect(response, respond)
+    
+class FullAmmo(Effect):
+    effect_name = "full_ammo"
+    display_name = "Ammo Refilled!"
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            for pool in GetPlayerCharacter(self.pc).ResourcePoolComponent.ResourcePools:
+                if "Ammo" in str(pool) and "Eridium" not in str(pool):
+                    pool.CurrentValue = pool.MaxValue.Value
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
