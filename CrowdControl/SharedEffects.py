@@ -49,6 +49,22 @@ class SpawnEnemyEffect(Effect):
             SendToHost(self)
         return super().run_effect()
     
+class GiveCurrencyEffect(Effect):
+    effect_name = "givecurrency"
+    display_name = "Added Currency"
+
+    def run_effect(self, response = "Success", respond = True):
+        if self.args[0] == "Eridium":
+            currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Eridium.InventoryCategory_Eridium")
+        elif self.args[0] == "Cash":
+            currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money")
+        else:
+            currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money") #default to money ig
+
+        self.pc.ServerAddCurrency(int(self.args[1]), currency)
+        self.display_name = f"Gave {str(self.args[1])} {str(self.args[0])}"
+        return super().run_effect(response, respond)
+    
 
 used_names: list = []
 buddy_watch_running: bool = False
