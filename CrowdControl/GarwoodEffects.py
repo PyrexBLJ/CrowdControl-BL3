@@ -74,9 +74,10 @@ class BarrelNet(Effect):
     def run_effect(self):
         if AmIHost():
             PCRot = self.pc.pawn.K2_GetActorRotation()
-            PCLoc = Circle(self.pc.pawn.K2_GetActorLocation(),2,4,7,600,300,False)
+            PCLoc = Circle(self.pc.pawn.K2_GetActorLocation(),2,4,7,600,0,False)
             for net in PCLoc:
-                SpawnInteractiveObject(0,net,PCRot)
+                actor = SpawnInteractiveObject(0,net,PCRot)
+                actor.BPI_SetSimulatePhysics(False)
         else:
             SendToHost(self)
         return super().run_effect()
