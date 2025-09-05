@@ -54,15 +54,18 @@ class GiveCurrencyEffect(Effect):
     display_name = "Added Currency"
 
     def run_effect(self, response = "Success", respond = True):
-        if self.args[0] == "Eridium":
-            currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Eridium.InventoryCategory_Eridium")
-        elif self.args[0] == "Cash":
-            currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money")
-        else:
-            currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money") #default to money ig
+        if AmIHost():
+            if self.args[0] == "Eridium":
+                currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Eridium.InventoryCategory_Eridium")
+            elif self.args[0] == "Cash":
+                currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money")
+            else:
+                currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money") #default to money ig
 
-        self.pc.ServerAddCurrency(int(self.args[1]), currency)
-        self.display_name = f"Gave {str(self.args[1])} {str(self.args[0])}"
+            self.pc.ServerAddCurrency(int(self.args[1]), currency)
+            self.display_name = f"Gave {str(self.args[1])} {str(self.args[0])}"
+        else:
+            SendToHost(self)
         return super().run_effect(response, respond)
     
 

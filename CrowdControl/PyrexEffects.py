@@ -308,6 +308,7 @@ class FlyMode(Effect):
             GetPlayerCharacter(self.pc).OakCharacterMovement.MovementMode = 1
             GetPlayerCharacter(self.pc).OakDamageComponent.MinimumDamageLaunchVelocity = 370
             GetPlayerCharacter(self.pc).OakCharacterMovement.MaxFlySpeed.Value = 600
+        self.display_name = "rip flight"
         return super().stop_effect(response, respond)
     
 class FullAmmo(Effect):
