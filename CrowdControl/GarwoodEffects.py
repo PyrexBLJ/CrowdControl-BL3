@@ -5,7 +5,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
 from unrealsdk import make_struct
-from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net
+from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net,Circle
 
 class SuperHot(Effect):
 
@@ -74,7 +74,7 @@ class BarrelNet(Effect):
     def run_effect(self):
         if AmIHost():
             PCRot = self.pc.pawn.K2_GetActorRotation()
-            PCLoc = Net(self.pc.pawn.K2_GetActorLocation(),600,300)
+            PCLoc = Circle(self.pc.pawn.K2_GetActorLocation(),2,4,7,600,300,False)
             for net in PCLoc:
                 SpawnInteractiveObject(0,net,PCRot)
         else:

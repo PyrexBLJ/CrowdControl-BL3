@@ -225,3 +225,12 @@ def SpawnInteractiveObject(Index: int, Location: None, Rotation: None) -> None:
 def Net(Location: None, OffSet: 600 , ZOffSet: 300) -> None:
     Netlist: list = [make_struct("Vector", X=Location.X + OffSet, Y=Location.Y + 0, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + -OffSet, Y=Location.Y + 0, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + 0, Y=Location.Y + OffSet, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + 0, Y=Location.Y + -OffSet, Z=Location.Z+ZOffSet),make_struct("Vector", X=Location.X + 0, Y=Location.Y + 0, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + -OffSet, Y=Location.Y + OffSet, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + -OffSet, Y=Location.Y + -OffSet, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + OffSet, Y=Location.Y + -OffSet, Z=Location.Z+ZOffSet), make_struct("Vector", X=Location.X + OffSet, Y=Location.Y + OffSet, Z=Location.Z+ZOffSet)]
     return Netlist
+
+def Circle(Location: None, Layers: 1, LayerIncrease: 2, Baseamount: 6, OffSet: 600, ZOffSet: 300, Center:bool = False) -> None:
+    circlenet: list = []
+    if Center:
+        circlenet.append(make_struct("Vector", X=Location.X, Y=Location.Y, Z=Location.Z + ZOffSet))
+    for i in range(Layers):
+        for u in range((LayerIncrease * i) + Baseamount):
+            circlenet.append(make_struct("Vector", X=Location.X + OffSet * math.cos(2*math.pi*((u+1)/((LayerIncrease * i) + Baseamount))) * (i + 1), Y=Location.Y + OffSet * math.sin(2*math.pi*((u+1)/((LayerIncrease * i) + Baseamount))) * (i + 1), Z=Location.Z + ZOffSet))
+    return circlenet
