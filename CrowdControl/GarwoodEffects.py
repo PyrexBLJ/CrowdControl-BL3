@@ -43,9 +43,14 @@ class SizeSteal(Effect):
     display_name = "Size Steal"
 
     def run_effect(self):
-        global originalsize
-        originalsize = self.pc.Pawn.GetActorScale3D()
-        add_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal", self.size_steal)
+        global PlayerListSize
+        if AmIHost():
+            PlayerListSize = []
+            for player in ENGINE.GameViewport.World.GameState.PlayerArray:
+                PlayerListSize.append(player.Owner.Pawn.GetActorScale3D())
+            add_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal", self.size_steal)
+        else:
+            SendToHost(self)
         return super().run_effect()
 
     def size_steal(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
@@ -53,9 +58,12 @@ class SizeSteal(Effect):
         args.DamageCauser.GetOwner().SetActorScale3D(make_struct("Vector" , X = args.DamageCauser.GetOwner().GetActorScale3D().X * 1.05, Y = args.DamageCauser.GetOwner().GetActorScale3D().Y * 1.05, Z = args.DamageCauser.GetOwner().GetActorScale3D().Z * 1.05))
 
     def stop_effect(self):
-        global originalsize
+        global PlayerListSize
+        I=0
         remove_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal")
-        self.pc.Pawn.SetActorScale3D(originalsize)
+        for player in ENGINE.GameViewport.World.GameState.PlayerArray:
+            player.Owner.Pawn.SetActorScale3D(PlayerListSize[I])
+            I+=1
         return super().stop_effect()
 
 class BarrelNet(Effect):
