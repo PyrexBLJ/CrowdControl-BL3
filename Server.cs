@@ -57,5 +57,6 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Fly", "fly_mode") { Duration = 60 },
         //new("Hype Train (remove this before shipping i think)", "event-hype-train"),
         new("Full Ammo", "full_ammo"),
+        new("Vendor Box", "vendor_box"),
     };
 }

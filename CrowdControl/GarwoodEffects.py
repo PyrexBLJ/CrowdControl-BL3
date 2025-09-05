@@ -80,3 +80,20 @@ class BarrelNet(Effect):
         else:
             SendToHost(self)
         return super().run_effect()
+
+class VendorBox(Effect):
+
+    effect_name = "vendor_box"
+    display_name = "Vendor Box"
+
+    def run_effect(self):
+        if AmIHost():
+            counter = 1
+            PCLoc = Circle(self.pc.pawn.K2_GetActorLocation(),1,0,4,150,-75,False)
+            for net in PCLoc:
+                PCRot = make_struct("Rotator", Roll =0, Pitch=0, Yaw=90*counter + 180)
+                SpawnInteractiveObject(counter,net,PCRot)
+                counter += 1
+        else:
+            SendToHost(self)
+        return super().run_effect()
