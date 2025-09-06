@@ -4,7 +4,7 @@ from mods_base import ENGINE,get_pc
 from unrealsdk import find_object, make_struct, find_all, find_class, load_package
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct,IGNORE_STRUCT
 from unrealsdk.hooks import Type, add_hook, remove_hook, prevent_hooking_direct_calls
-from .Utils import blacklist_teams,oak_blueprint_library,GetPawnList
+from .Utils import blacklist_teams,oak_blueprint_library,GetPawnList,AmIHost,SendToHost
 import random
 
 class OopsAllPsychos(Effect):
@@ -28,7 +28,10 @@ class OopsAllPsychos(Effect):
         self.set_spawns()
 
     def run_effect(self):
-        self.set_spawns()
+        if AmIHost():
+            self.set_spawns()
+        else:
+            SendToHost(self)
         return super().run_effect()
     
     def on_map_change(self):
@@ -36,7 +39,8 @@ class OopsAllPsychos(Effect):
         return super().on_map_change()
 
     def stop_effect(self):
-        remove_hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.PRE, "oops_psychos_dim")
+        if AmIHost():
+            remove_hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.PRE, "oops_psychos_dim")
         return super().stop_effect()
     
 #r.TextureStreaming.PoolSize
@@ -46,9 +50,12 @@ class LaunchPlayer(Effect):
     effect_name = "launch_player"
     display_name = "Launch Player"
     def run_effect(self):
-        CurrentVel = self.pc.Pawn.OakCharacterMovement.Velocity
-        CurrentVel.Z += 10000
-        self.pc.Pawn.LaunchPawn(CurrentVel, True, True)
+        if AmIHost():
+            CurrentVel = self.pc.Pawn.OakCharacterMovement.Velocity
+            CurrentVel.Z += 10000
+            self.pc.Pawn.LaunchPawn(CurrentVel, True, True)
+        else:
+            SendToHost(self)
         return super().run_effect()
     
 
@@ -56,12 +63,15 @@ class ClutterInventory(Effect):
     effect_name = "clutter_inventory"
     display_name = "Clutter Backpack"
     def run_effect(self):
-        ItemPoolData = find_object("ItemPoolData", "/Game/GameData/Loot/ItemPools/Guns/ItemPool_TrialsChests.ItemPool_TrialsChests")
-            
-        init = find_class("Init_RandomLootCount_LotsAndLots_C")
+        if AmIHost():
+            ItemPoolData = find_object("ItemPoolData", "/Game/GameData/Loot/ItemPools/Guns/ItemPool_TrialsChests.ItemPool_TrialsChests")
+                
+            init = find_class("Init_RandomLootCount_LotsAndLots_C")
 
-        for i in range(25):
-            oak_blueprint_library.GiveRewardItem(self.pc.Pawn,self.pc.Pawn,ItemPoolData,init)
+            for i in range(25):
+                oak_blueprint_library.GiveRewardItem(self.pc.Pawn,self.pc.Pawn,ItemPoolData,init)
+        else:
+            SendToHost(self)
         return super().run_effect()
     
 
@@ -113,24 +123,27 @@ class SpawnVehicle(Effect):
     effect_name = "spawn_vehicle"
     display_name = "Spawn Vehicle"
     def run_effect(self):
-        ride = gameplay_statics.SpawnObject(find_class("CatchARide"), self.pc)
-        platform = gameplay_statics.SpawnObject(find_class("CatchARidePlatform"), self.pc)
-        ride.CatchARide_Platform1 = platform
+        if AmIHost():
+            ride = gameplay_statics.SpawnObject(find_class("CatchARide"), self.pc)
+            platform = gameplay_statics.SpawnObject(find_class("CatchARidePlatform"), self.pc)
+            ride.CatchARide_Platform1 = platform
 
-        player_loc = self.pc.Pawn.K2_GetActorLocation()
-        player_rot = self.pc.Pawn.K2_GetActorRotation()
+            player_loc = self.pc.Pawn.K2_GetActorLocation()
+            player_rot = self.pc.Pawn.K2_GetActorRotation()
 
-        veh_index = self.pc.CurrentSavegame.VehicleLastLoadoutIndex
-        car = self.pc.VehicleSpawnerComponent.VehicleLoadouts[veh_index]
+            veh_index = self.pc.CurrentSavegame.VehicleLastLoadoutIndex
+            car = self.pc.VehicleSpawnerComponent.VehicleLoadouts[veh_index]
 
-        if "revolver" in str(car.body).lower():
-            platform.PlatformSafeZone.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
-            platform.PlatformSmallVehicleSafeZone1.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
-            platform.SmallVehicleSpawnSocket1.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+            if "revolver" in str(car.body).lower():
+                platform.PlatformSafeZone.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+                platform.PlatformSmallVehicleSafeZone1.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+                platform.SmallVehicleSpawnSocket1.K2_SetRelativeLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+            else:
+                platform.K2_SetActorLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
+
+            self.pc.SpawnVehicleFromConfig(self.pc.Pawn.PlayerBalanceState.GetExperienceLevel(),car,ride)
         else:
-            platform.K2_SetActorLocationAndRotation(player_loc, player_rot, False, IGNORE_STRUCT, True)
-
-        self.pc.SpawnVehicleFromConfig(self.pc.Pawn.PlayerBalanceState.GetExperienceLevel(),car,ride)
+            SendToHost(self)
         return super().run_effect()
 
 class HarvestEvent(Effect):
@@ -191,11 +204,15 @@ class HideWeapons(Effect):
     display_name = "Hide Weapons"
 
     def run_effect(self):
-        WeaponStatics.HideWeapons(self.pc.Pawn, "CrowdControl_Weapons")
+        if AmIHost():
+            WeaponStatics.HideWeapons(self.pc.Pawn, "CrowdControl_Weapons")
+        else:
+            SendToHost(self)
         return super().run_effect()
     
     def stop_effect(self):
-        WeaponStatics.UnhideWeapons(self.pc.Pawn, "CrowdControl_Weapons")
+        if AmIHost():
+            WeaponStatics.UnhideWeapons(self.pc.Pawn, "CrowdControl_Weapons")
         return super().stop_effect()
     
 GbxGameSystemCoreBlueprintLibrary = find_class("GbxGameSystemCoreBlueprintLibrary").ClassDefaultObject
@@ -204,11 +221,15 @@ class DisableJumping(Effect):
     display_name = "Disable Jumping"
 
     def run_effect(self):
-        GbxGameSystemCoreBlueprintLibrary.ResourceLockJumping(self.pc.Pawn, "CrowdControl_Jumping")
+        if AmIHost():
+            GbxGameSystemCoreBlueprintLibrary.ResourceLockJumping(self.pc.Pawn, "CrowdControl_Jumping")
+        else:
+            SendToHost(self)
         return super().run_effect()
     
     def stop_effect(self):
-        GbxGameSystemCoreBlueprintLibrary.ResourceUnlockJumping(self.pc.Pawn, "CrowdControl_Jumping")
+        if AmIHost():
+            GbxGameSystemCoreBlueprintLibrary.ResourceUnlockJumping(self.pc.Pawn, "CrowdControl_Jumping")
         return super().stop_effect()
     
 class DisableMantling(Effect):
@@ -216,11 +237,15 @@ class DisableMantling(Effect):
     display_name = "Disable Mantling"
 
     def run_effect(self):
-        GbxGameSystemCoreBlueprintLibrary.ResourceLockMantling(self.pc.Pawn, "CrowdControl_Mantle")
+        if AmIHost():
+            GbxGameSystemCoreBlueprintLibrary.ResourceLockMantling(self.pc.Pawn, "CrowdControl_Mantle")
+        else:
+            SendToHost(self)
         return super().run_effect()
     
     def stop_effect(self):
-        GbxGameSystemCoreBlueprintLibrary.ResourceUnlockMantling(self.pc.Pawn, "CrowdControl_Mantle")
+        if AmIHost():
+            GbxGameSystemCoreBlueprintLibrary.ResourceUnlockMantling(self.pc.Pawn, "CrowdControl_Mantle")
         return super().stop_effect()    
     
 class DisableCrouch(Effect):
@@ -228,9 +253,13 @@ class DisableCrouch(Effect):
     display_name = "Disable Crouching"
 
     def run_effect(self):
-        GbxGameSystemCoreBlueprintLibrary.ResourceLockCrouching(self.pc.Pawn, "CrowdControl_Crouch")
+        if AmIHost():
+            GbxGameSystemCoreBlueprintLibrary.ResourceLockCrouching(self.pc.Pawn, "CrowdControl_Crouch")
+        else:
+            SendToHost(self)
         return super().run_effect()
     
     def stop_effect(self):
-        GbxGameSystemCoreBlueprintLibrary.ResourceUnlockCrouching(self.pc.Pawn, "CrowdControl_Crouch")
+        if AmIHost():
+            GbxGameSystemCoreBlueprintLibrary.ResourceUnlockCrouching(self.pc.Pawn, "CrowdControl_Crouch")
         return super().stop_effect()
