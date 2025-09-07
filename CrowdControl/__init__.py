@@ -47,13 +47,14 @@ def connect_socket(host, port):
         connecting = True
         do_reset = True
         print(f"CrowdControl: Connecting to {host}:{port}... (leaking this ip is fine you can relax)")
+        SetEffectStatus("viewer_badass", 0x82, get_pc()) # failsafe to re-enable the viewer badass effect incase the streamer crashes during the cooldown
     except Exception as e:
         print(f"CrowdControl: Connection failed: {e}")
         client_socket = None
         connecting = False
 
 
-@hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE)
+@hook("/Script/Engine.Actor:ReceiveTick", Type.PRE)
 def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction,) -> Any:
     global shutdown, do_reset, wait_ticks, client_socket, buffer, connecting
 
@@ -96,7 +97,7 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                     continue
 
                 if message["type"] != 253:
-                    if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'"]:
+                    if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'", "Level'/Game/Maps/MenuMap/Loader.Loader:PersistentLevel'"]:
                         NotifyEffect(message["id"], "Failure", message["code"], get_pc())
                         print("Crowd Control: Effect redeemed when it was not possible to activate, cancelled and viewer refunded.")
                         return
@@ -234,7 +235,7 @@ def CrowdControlFinishedDim(obj: UObject,args: WrappedStruct,ret: Any,func: Boun
     CrowdControlFinishedDim.disable()
 
 
-@hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, hook_identifier="MainCCDrawHUDHook")
+@hook("/Script/Engine.Actor:ReceiveTick", Type.PRE, hook_identifier="MainCCDrawHUDHook") #/Script/Engine.HUD:ReceiveDrawHUD
 def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
     global effect_instances
     effects_to_remove: list = []
