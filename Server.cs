@@ -2,15 +2,15 @@
 using CrowdControl.Common;
 using ConnectorType = CrowdControl.Common.ConnectorType;
 
-namespace CrowdControl.Games.Packs.borderlands3;
+namespace CrowdControl.Games.Packs.Borderlands3;
 
-public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
+public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
 {
-    public borderlands3(UserRecord player, Func<CrowdControlBlock, bool> responseHandler, Action<object> statusUpdateHandler) : base(player, responseHandler, statusUpdateHandler)
+    public Borderlands3(UserRecord player, Func<CrowdControlBlock, bool> responseHandler, Action<object> statusUpdateHandler) : base(player, responseHandler, statusUpdateHandler)
     {
     }
 
-    public override Game Game => new("Borderlands 3", "borderlands3", "PC", ConnectorType.SimpleTCPServerConnector);
+    public override Game Game => new("Borderlands 3", "Borderlands3", "PC", ConnectorType.SimpleTCPServerConnector);
 
     protected override string ProcessName => "Borderlands3.exe";
 
