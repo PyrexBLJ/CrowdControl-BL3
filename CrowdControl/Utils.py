@@ -220,16 +220,13 @@ def SpawnEnemyEx(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, is_friendly:bo
 
     return actor
 
-def SpawnInteractiveObject(Index: int, Location: None, Rotation: None, level: int = None) -> None:
+def SpawnInteractiveObject(Index: int, Location: None, Rotation: None) -> None:
     factory = find_class("SpawnFactory_OakInteractiveObject").ClassDefaultObject
     load_package(str(PackageInteractive[Index]))
     factory.InteractiveObjectClass = find_object("BlueprintGeneratedClass", str(PackageNameInteractive[Index]))
     spawnpoint = get_spawn_point()
     spawnpoint.K2_SetWorldLocation(Location, True, IGNORE_STRUCT, True)
     spawnpoint.K2_SetWorldRotation(Rotation, True, IGNORE_STRUCT, True)
-    if level != None:
-        original_level = ENGINE.GameInstance.OakSingletons.RegionManager.SavedRegionData[0].GameStage
-        ENGINE.GameInstance.OakSingletons.RegionManager.SavedRegionData[0].GameStage = level
     actor = library.SpawnActorWithSpawner(get_pc(), factory, spawnpoint, get_spawner(), None)
     return actor
 
