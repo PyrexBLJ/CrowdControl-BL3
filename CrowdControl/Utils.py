@@ -231,8 +231,6 @@ def SpawnInteractiveObject(Index: int, Location: None, Rotation: None, level: in
         original_level = ENGINE.GameInstance.OakSingletons.RegionManager.SavedRegionData[0].GameStage
         ENGINE.GameInstance.OakSingletons.RegionManager.SavedRegionData[0].GameStage = level
     actor = library.SpawnActorWithSpawner(get_pc(), factory, spawnpoint, get_spawner(), None)
-    if level != None:
-        ENGINE.GameInstance.OakSingletons.RegionManager.SavedRegionData[0].GameStage = original_level
     return actor
 
 def Net(Location: None, OffSet: 600 , ZOffSet: 300) -> None:
