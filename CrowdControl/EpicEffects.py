@@ -14,7 +14,7 @@ class HighsLows(Effect):
         if AmIHost():
             self.pc.Pawn.K2_GetActorLocation()
             self.pc.Pawn.K2_GetActorRotation()
-            loc = make_struct("Vector", X=self.pc.pawn.K2_GetActorLocation().X, Y=self.pc.pawn.K2_GetActorLocation().Y, Z=self.pc.pawn.K2_GetActorLocation().Z + random.randrange(-10000, 75000))
+            loc = make_struct("Vector", X=self.pc.pawn.K2_GetActorLocation().X, Y=self.pc.pawn.K2_GetActorLocation().Y, Z=self.pc.pawn.K2_GetActorLocation().Z + random.randrange(-60000, 75000))
             rot = self.pc.pawn.K2_GetActorRotation()
             self.pc.Pawn.K2_TeleportTo(loc,rot)
         else:
