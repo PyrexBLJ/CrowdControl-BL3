@@ -183,6 +183,8 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = ""
             name.DisplayName = DisplayName
             actor.TargetableComponent.SetTargetUIName(name)
 
+    factory.TeamOverride = None
+
     return True
 
 def SpawnEnemyEx(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, is_friendly:bool = False) -> UObject:
