@@ -61,5 +61,6 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Give 5k Eridium", "givecurrency_Eridium_5000"),
         new("Give 5m Cash", "givecurrency_Cash_5000000"),
         new("Splash Immunity", "NoSplash") { Duration = 120 },
+        new("Red Chest", "red_chest"),
     };
 }
