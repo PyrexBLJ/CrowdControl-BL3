@@ -5,7 +5,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
 from unrealsdk import make_struct
-from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net,Circle,InFrontOfPlayer
+from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net,Circle,InFrontOfPlayer,GetPlayerCharacter
 
 class SuperHot(Effect):
 
@@ -107,7 +107,7 @@ class RedChest(Effect):
     def run_effect(self):
         if AmIHost():
             PCRot = make_struct("Rotator", Roll =0, Pitch=0, Yaw=self.pc.Pawn.K2_GetActorRotation().Yaw + 180)
-            actor = SpawnInteractiveObject(5,make_struct("Vector", X=self.pc.Pawn.K2_GetActorLocation().X + (self.pc.GetActorForwardVector().X * 200), Y=self.pc.Pawn.K2_GetActorLocation().Y + (self.pc.GetActorForwardVector().Y * 200), Z=self.pc.Pawn.K2_GetActorLocation().Z - 100),PCRot)
+            actor = SpawnInteractiveObject(5,make_struct("Vector", X=self.pc.Pawn.K2_GetActorLocation().X + (self.pc.GetActorForwardVector().X * 200), Y=self.pc.Pawn.K2_GetActorLocation().Y + (self.pc.GetActorForwardVector().Y * 200), Z=self.pc.Pawn.K2_GetActorLocation().Z - 75),PCRot)
         else:
             SendToHost(self)
         return super().run_effect()
