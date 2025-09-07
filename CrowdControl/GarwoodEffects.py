@@ -113,16 +113,12 @@ class RedChest(Effect):
             SendToHost(self)
         return super().run_effect()
 
-class SpawnInvincible(Effect):
+class SpawnWotan(Effect):
 
-    effect_name = "spawn_invincible"
-    display_name = "Spawn Invincible"
+    effect_name = "spawn_Wotan"
+    display_name = "Spawn Wotan the Invincible"
 
-    possible_enemies = ["Wotan the Invincible", 
-                        "Scourge the Invincible Martyr", 
-                        "SHODOS The INVINCIBLE", 
-                        "Vermivorous the Invincible", 
-                        "Hemovorous the Invincible"]
+    possible_enemies = ["Wotan the Invincible"]
 
     def run_effect(self):
         if AmIHost():
