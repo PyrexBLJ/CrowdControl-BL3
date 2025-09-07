@@ -4,8 +4,9 @@ from mods_base import ENGINE,get_pc
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct
 from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
+import random
 from unrealsdk import make_struct
-from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net,Circle,InFrontOfPlayer,GetPlayerCharacter
+from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net,Circle,InFrontOfPlayer,GetPlayerCharacter,SpawnEnemyEx
 
 class SuperHot(Effect):
 
