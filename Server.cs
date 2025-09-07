@@ -62,5 +62,6 @@ public class borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Give 5m Cash", "givecurrency_Cash_5000000"), { Price =  500 },
         new("Splash Immunity", "NoSplash") { Duration = 120 }, { Price =  200 },
         new("Red Chest", "red_chest"), { Price =  400 },
+        new("Spawn Invincible", "spawn_invincible"), { Price =  1000 },
     };
 }

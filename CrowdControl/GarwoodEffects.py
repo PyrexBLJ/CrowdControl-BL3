@@ -111,3 +111,24 @@ class RedChest(Effect):
         else:
             SendToHost(self)
         return super().run_effect()
+
+class Invincible(Effect):
+
+    effect_name = "spawn_invincible"
+    display_name = "Spawn Invincible"
+
+    possible_enemies = ["Wotan the Invincible", 
+                        "Scourge the Invincible Martyr", 
+                        "SHODOS The INVINCIBLE", 
+                        "Vermivorous the Invincible", 
+                        "Hemovorous the Invincible"]
+
+    def run_effect(self):
+        if AmIHost():
+            actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
+            if actor != None:
+                actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
+                actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
+        else:
+            SendToHost(self)
+        return super().run_effect()
