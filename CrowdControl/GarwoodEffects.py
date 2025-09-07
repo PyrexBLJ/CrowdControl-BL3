@@ -113,7 +113,7 @@ class RedChest(Effect):
             SendToHost(self)
         return super().run_effect()
 
-class Invincible(Effect):
+class SpawnInvincible(Effect):
 
     effect_name = "spawn_invincible"
     display_name = "Spawn Invincible"
