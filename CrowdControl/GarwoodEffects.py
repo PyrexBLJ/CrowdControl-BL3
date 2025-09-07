@@ -118,11 +118,9 @@ class SpawnWotan(Effect):
     effect_name = "spawn_Wotan"
     display_name = "Spawn Wotan the Invincible"
 
-    possible_enemies = ["Wotan the Invincible"]
-
     def run_effect(self):
         if AmIHost():
-            actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
+            actor = SpawnEnemyEx("Wotan the Invincible", 1, self.pc)
             if actor != None:
                 actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
                 actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
