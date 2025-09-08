@@ -101,6 +101,10 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                         NotifyEffect(message["id"], "Failure", message["code"], get_pc())
                         print("Crowd Control: Effect redeemed when it was not possible to activate, cancelled and viewer refunded.")
                         return
+                    elif get_pc().IsInMenu():
+                        NotifyEffect(message["id"], "Retry", message["code"], get_pc())
+                        print("Crowd Control: Effect redeemed while in a menu, retrying.")
+                        return
 
 
                     eid = message["id"]
