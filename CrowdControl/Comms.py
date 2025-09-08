@@ -17,7 +17,7 @@ def SetEffectStatus(code, status, pc:UObject):
         try:
             from . import client_socket
             if client_socket:
-                print(f"Status: {message}")
+                #print(f"Status: {message}")
                 payload = json.dumps(message).encode("utf-8") + b"\x00"
                 client_socket.send(payload)
             else:
@@ -44,11 +44,11 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
     message = {"id": eid, "status": status, "code": code, "type": 0}
 
     if timeRemaining is not None:
-        print(f"CrowdControl: Responding with {status} with {timeRemaining} seconds remaining for effect with ID {eid}")
+        #print(f"CrowdControl: Responding with {status} with {timeRemaining} seconds remaining for effect with ID {eid}")
         #message["timeRemaining"] = timeRemaining
         timed.add(eid)
-    else:
-        print(f"CrowdControl: Responding with {status} for effect with ID {eid}")
+    #else:
+        #print(f"CrowdControl: Responding with {status} for effect with ID {eid}")
 
     if status == "Finished":
         timed.discard(eid)
@@ -60,7 +60,7 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
     try:
         from . import client_socket
         if client_socket:
-            print(f"Response: {message}")
+            #print(f"Response: {message}")
             payload = json.dumps(message).encode("utf-8") + b"\x00"
             client_socket.send(payload)
         else:
@@ -88,7 +88,7 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
         effect_name = "givecurrency"
 
     effect_cls = None
-    print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")
+    #print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")
     from .Effect import Effect
     for c in Effect.registry.values():
         if c.effect_name == effect_name:

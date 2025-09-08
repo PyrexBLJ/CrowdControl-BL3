@@ -212,7 +212,7 @@ class ViewerBadass(Effect):
         global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
         if viewer_badass_cooldown_enabled == True:
             if (viewer_badass_cooldown_start_time + (get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents * 60)) <= time.time():
-                print("viewer badass cooldown over, reenabling")
+                #print("viewer badass cooldown over, reenabling")
                 SetEffectStatus("viewer_badass", 0x82, self.pc)
                 viewer_badass_cooldown_enabled = False
                 remove_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown")
@@ -223,7 +223,7 @@ class ViewerBadass(Effect):
             global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
             viewer_badass_cooldown_start_time = time.time()
             viewer_badass_cooldown_enabled = True
-            print("starting viewer badass cooldown")
+            #print("starting viewer badass cooldown")
             self.display_name = f"{self.viewer} Died"
             self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}. {get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents} Minute Cooldown Started.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
             add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown", self.cooldown)
@@ -240,12 +240,13 @@ class ViewerBadass(Effect):
             self.display_name = f"Summoning {self.viewer}"
             actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
             if actor != None:
-                print(actor)
+                #print(actor)
                 sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
                 actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
                 actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
                 sed.SetEventEnemy(actor)
                 sed.SetEventEnemyName(self.viewer)
+                unrealsdk.load_package("/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss")
                 actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
                 actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
                 self.viewer_pawn = actor

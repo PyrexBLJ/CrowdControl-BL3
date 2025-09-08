@@ -98,7 +98,7 @@ class HypeTrain(Effect):
                 pass
         if len(spawned_friendlies) == 0:
             used_names = []
-            print("stopping hype train hook")
+            #print("stopping hype train hook")
             remove_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "keep_track_of_friendlies_hook")
             buddy_watch_running = False
         return None
@@ -122,7 +122,7 @@ class HypeTrain(Effect):
                 actor = SpawnEnemyEx(self.possible_enemies[randint(0, len(self.possible_enemies) - 1)], 1, self.pc, True)
                 if actor == None:
                     return super().run_effect("Failed", respond)
-                print(actor)
+                #print(actor)
                 spawned_friendlies.append(str(actor))
 
                 actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel + 5)
@@ -154,7 +154,7 @@ class HypeTrain(Effect):
                     if picked_name in used_names:
                         i += 1
                         if i > len(possible_names):
-                            print("all names have been used")
+                            #print("all names have been used")
                             all_names_used = True
                             name.DisplayName = possible_names[randint(0, len(possible_names) - 1)]
                     else:

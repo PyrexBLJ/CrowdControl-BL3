@@ -29,7 +29,7 @@ class Effect:
         
 
     def run_effect(self, response:str = "Success", respond:bool = True):
-        print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
+        #print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
         self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         if not get_pc().PlayerState == ENGINE.GameViewport.World.GameState.HostPlayerState:
             respond = False

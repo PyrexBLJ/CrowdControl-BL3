@@ -46,7 +46,7 @@ def connect_socket(host, port):
         client_socket = s
         connecting = True
         do_reset = True
-        print(f"CrowdControl: Connecting to {host}:{port}... (leaking this ip is fine you can relax)")
+        #print(f"CrowdControl: Connecting to {host}:{port}... (leaking this ip is fine you can relax)")
         SetEffectStatus("viewer_badass", 0x82, get_pc()) # failsafe to re-enable the viewer badass effect incase the streamer crashes during the cooldown
     except Exception as e:
         print(f"CrowdControl: Connection failed: {e}")
@@ -205,7 +205,7 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
         try:
             from . import client_socket
             if client_socket:
-                print(f"Status: {message}")
+                #print(f"Status: {message}")
                 payload = json.dumps(message).encode("utf-8") + b"\x00"
                 client_socket.send(payload)
             else:
@@ -246,11 +246,11 @@ def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFun
     for inst in effect_instances:
         if inst.is_running and inst.duration > 0:
             if (inst.start_time + inst.duration) <= time.time():
-                print("stopping timed effect")
+                #print("stopping timed effect")
                 effects_to_remove.append(inst)
                 inst.stop_effect()
     for e in effects_to_remove:
         effect_instances.remove(e)
 
-        
+
 build_mod()
