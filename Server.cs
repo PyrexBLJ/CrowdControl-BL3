@@ -27,7 +27,6 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Launch Player", "launch_player") { Price = 150, Category = new EffectGrouping("Player Effects") },
         new("Instant Death", "instant_death") { Price = 2000, Category = new EffectGrouping("Player Effects") },
         new("Drop Entire Inventory", "drop_entire_inventory") { Price = 500, Category = new EffectGrouping("Player Effects") },
-        new("Spawn Vehicle", "spawn_vehicle") { Price = 125, Category = new EffectGrouping("Player Effects") },
         new("Highs And Lows", "HighsLows") { Price = 750, Category = new EffectGrouping("Player Effects") },
         new("Super Hot", "super_hot") { Duration = 60, Price = 450, Category = new EffectGrouping("Player Effects") },
         new("Hide Weapons", "hide_weapons") { Duration = 60, Category = new EffectGrouping("Player Effects"), Price = 50 },
@@ -53,6 +52,7 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Vendor Box", "vendor_box") { Price = 850, Category = new EffectGrouping("World Effects") },
         new("Red Chest", "red_chest") { Price = 400, Category = new EffectGrouping("World Effects") },
         new("Oops All Psychos", "oops_all_psychos") { Duration = 300, Price = 100, Category = new EffectGrouping("World Effects") },
+        new("Spawn Vehicle", "spawn_vehicle") { Price = 125, Category = new EffectGrouping("World Effects") },
 
         new("Spawn Loot Tink", "spawnenemy_loottink_1") { Category = new EffectGrouping("Spawn Enemies"), Price = 300 },
         new("BEES!", "spawnenemy_ratchswarm_20") { Category = new EffectGrouping("Spawn Enemies"), Price = 150 },
