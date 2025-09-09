@@ -124,6 +124,8 @@ class SpawnWotan(Effect):
             if actor != None:
                 actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
                 actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
+            else:
+                return super().run_effect("Failure")
         else:
             SendToHost(self)
         return super().run_effect()
