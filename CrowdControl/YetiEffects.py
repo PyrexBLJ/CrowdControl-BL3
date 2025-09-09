@@ -124,6 +124,9 @@ class SpawnVehicle(Effect):
     display_name = "Spawn Vehicle"
     def run_effect(self):
         if AmIHost():
+            if self.pc.CurrentSavegame.VehicleLastLoadoutIndex == -1:
+                return super().run_effect("Failure")
+            
             ride = gameplay_statics.SpawnObject(find_class("CatchARide"), self.pc)
             platform = gameplay_statics.SpawnObject(find_class("CatchARidePlatform"), self.pc)
             ride.CatchARide_Platform1 = platform
