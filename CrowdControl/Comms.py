@@ -86,6 +86,11 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, *args):
         split_name = effect_name.split("_")
         extra_args.extend(split_name[1:3])
         effect_name = "givecurrency"
+    
+    if "csbooster" in effect_name:
+        split_name = effect_name.split("_")
+        extra_args.extend(split_name[1:2])
+        effect_name = "csbooster"
 
     effect_cls = None
     #print(f"CrowdControl: Requesting effect {effect_name} with ID {eid} and args viewer: {viewer}, viewers: {viewers}, source: {source}")

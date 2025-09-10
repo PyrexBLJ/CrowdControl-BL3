@@ -42,6 +42,13 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Give 5k Eridium", "givecurrency_Eridium_5000") { Price = 500, Category = new EffectGrouping("Player Effects") },
         new("Give 5m Cash", "givecurrency_Cash_5000000") { Price = 500, Category = new EffectGrouping("Player Effects") },
         new("Splash Immunity", "NoSplash") { Duration = 120, Price = 200, Category = new EffectGrouping("Player Effects") },
+        new("Random Moxxtail Booster", "moxx_tail") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
+        new("Brain Nanobots (xp) Booster", "csbooster_xp") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
+        new("Lucky Jabber Foot (cash) Booster", "csbooster_cash") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
+        new("Caffeine Caplets (speed) Booster", "csbooster_speed") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
+        new("Jabber-Cola (damage) Booster", "csbooster_damage") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
+        new("Elemental Powder (elemental proc) Booster", "csbooster_element") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
+        new("Butt Stallion Milk (loot) Booster", "csbooster_loot") { Duration = 120, Price = 50, Category = new EffectGrouping("Player Effects") },
 
         new("Silly Scales", "silly_scales") { Duration = 300, Price = 90, Category = new EffectGrouping("World Effects") },
         new("Delete Ground Items", "delete_ground_items") { Price = 1000, Category = new EffectGrouping("World Effects") },
@@ -53,6 +60,7 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Red Chest", "red_chest") { Price = 400, Category = new EffectGrouping("World Effects") },
         new("Oops All Psychos", "oops_all_psychos") { Duration = 300, Price = 100, Category = new EffectGrouping("World Effects") },
         new("Spawn Vehicle", "spawn_vehicle") { Price = 125, Category = new EffectGrouping("World Effects") },
+        new("One Shot Kills", "one_shot") { Duration = 30, Price = 250, Category = new EffectGrouping("World Effects") },
 
         new("Spawn Loot Tink", "spawnenemy_loottink_1") { Category = new EffectGrouping("Spawn Enemies"), Price = 300 },
         new("BEES!", "spawnenemy_ratchswarm_20") { Category = new EffectGrouping("Spawn Enemies"), Price = 150 },
@@ -60,6 +68,10 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Spawn Wotan the Invincible", "spawn_Wotan") { Price = 1000, Category = new EffectGrouping("Spawn Enemies") },
 
         new("Spawn Legendary Weapon", "spawnloot_legendaryweapon_1") { Category = new EffectGrouping("Spawn Loot"), Price = 250 },
+        new("Spawn Purple Weapon", "spawnloot_purpleweapon_1") { Category = new EffectGrouping("Spawn Loot"), Price = 200 },
+        new("Spawn Blue Weapon", "spawnloot_blueweapon_1") { Category = new EffectGrouping("Spawn Loot"), Price = 150 },
+        new("Spawn Green Weapon", "spawnloot_greenweapon_1") { Category = new EffectGrouping("Spawn Loot"), Price = 100 },
+        new("Spawn White Weapon", "spawnloot_whiteweapon_1") { Category = new EffectGrouping("Spawn Loot"), Price = 50 },
         new("Clutter Backpack", "clutter_inventory") { Price = 500, Category = new EffectGrouping("Spawn Loot") },
 
         //new("Start Bloody Harvest", "harvest_event") { Category = new EffectGrouping("Events") },

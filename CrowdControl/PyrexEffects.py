@@ -26,11 +26,13 @@ class NoGravity(Effect):
             GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 0.0
         else:
             SendToHost(self)
+        self.display_name = "No Gravity"
         return super().run_effect(response)
 
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
             GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 1.0
+        self.display_name = "Normal Gravity"
         return super().stop_effect(response, respond)
     
 class InstantDeath(Effect):
@@ -137,6 +139,7 @@ class FallDamage(Effect):
     def stop_effect(self):
         if AmIHost():
             remove_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook")
+        self.display_name = "No More Fall Damage"
         return super().stop_effect()
     
 class DropHeldWeapon(Effect):
@@ -242,8 +245,8 @@ class ViewerBadass(Effect):
             if actor != None:
                 #print(actor)
                 sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
-                actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
-                actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
+                actor.AIBalanceState.SetGameStage(int(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel) + 3)
+                actor.AIBalanceState.SetExperienceLevel(int(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel) + 3)
                 sed.SetEventEnemy(actor)
                 sed.SetEventEnemyName(self.viewer)
                 unrealsdk.load_package("/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss")
@@ -268,11 +271,13 @@ class FastGameSpeed(Effect):
             ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 4.0
         else:
             SendToHost(self)
+        self.display_name = "4x Speed"
         return super().run_effect(response, respond)
     
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
             ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 1.0
+        self.display_name = "Normal Speed"
         return super().stop_effect(response, respond)
     
 class SlowGameSpeed(Effect):
@@ -284,11 +289,13 @@ class SlowGameSpeed(Effect):
             ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 0.5
         else:
             SendToHost(self)
+            self.display_name = "0.5x Speed"
         return super().run_effect(response, respond)
     
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
             ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 1.0
+        self.display_name = "Normal Speed"
         return super().stop_effect(response, respond)
     
 class FlyMode(Effect):
@@ -324,3 +331,99 @@ class FullAmmo(Effect):
         else:
             SendToHost(self)
         return super().run_effect(response, respond)
+    
+class MoxxTail(Effect):
+    effect_name = "moxx_tail"
+    display_name = "Moxxtail Effect Given"
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            StreamerBoosterData = unrealsdk.find_object("StreamerBoosterData", "/Game/PatchDLC/Hibiscus/Streaming/Data/MoxxiStreamerBoosterData.MoxxiStreamerBoosterData")
+
+            if StreamerBoosterData == None:
+                return super().run_effect("Failure")
+
+            statuseffect1: int = random.randint(0, len(StreamerBoosterData.PrimaryBoosterInfos) - 1)
+            statuseffect2: int = random.randint(0, len(StreamerBoosterData.SecondaryBoosterInfos) - 1)
+
+            primaryeffect = unrealsdk.make_struct("StatusEffectSpec", StatusEffectData=StreamerBoosterData.PrimaryBoosterInfos[statuseffect1].StatusEffectData, EffectOwner=self.pc, EffectOwnerContextOverride=self.pc, DurationType=0, Duration=self.duration, EffectInstigator=self.pc, DamageCauser=None, DamagePerSecond=0.0)
+            secondaryeffect = unrealsdk.make_struct("StatusEffectSpec", StatusEffectData=StreamerBoosterData.SecondaryBoosterInfos[statuseffect2].StatusEffectData, EffectOwner=self.pc, EffectOwnerContextOverride=self.pc, DurationType=0, Duration=self.duration, EffectInstigator=self.pc, DamageCauser=None, DamagePerSecond=0.0)
+
+            GetPlayerCharacter(self.pc).StatusEffectManagerComponent.AddStatusEffect(primaryeffect)
+            GetPlayerCharacter(self.pc).StatusEffectManagerComponent.AddStatusEffect(secondaryeffect)
+
+            self.display_name = f"Moxxtail {StreamerBoosterData.PrimaryBoosterInfos[statuseffect1].DisplayName} + {StreamerBoosterData.SecondaryBoosterInfos[statuseffect2].DisplayName} Activated!"
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        self.display_name = "Moxxtail Booster Expired"
+        return super().stop_effect(response, respond)
+    
+class CSBooster(Effect):
+    effect_name = "csbooster"
+    display_name = "Citizen Science Booster Given"
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            if "xp" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(0, self.duration)
+                self.display_name = "Brain Nanobots Given"
+            elif "cash" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(1, self.duration)
+                self.display_name = "Lucky Jabber Foot Given"
+            elif "speed" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(2, self.duration)
+                self.display_name = "Caffeine Caplets Given"
+            elif "damage" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(3, self.duration)
+                self.display_name = "Jabber-Cola Given"
+            elif "element" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(4, self.duration)
+                self.display_name = "Elemental Powder Given"
+            elif "loot" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(5, self.duration)
+                self.display_name = "Butt Stallion Milk Given"
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        if "xp" in self.args:
+            self.display_name = "Brain Nanobots Expired"
+        elif "cash" in self.args:
+            self.display_name = "Lucky Jabber Foot Expired"
+        elif "speed" in self.args:
+            self.display_name = "Caffeine Caplets Expired"
+        elif "damage" in self.args:
+            self.display_name = "Jabber-Cola Expired"
+        elif "element" in self.args:
+            self.display_name = "Elemental Powder Expired"
+        elif "loot" in self.args:
+            self.display_name = "Butt Stallion Milk Expired"
+        return super().stop_effect(response, respond)
+    
+class OneShot(Effect):
+    effect_name = "one_shot"
+    display_name = "One Shot Kills"
+
+    def instakill(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+        if obj.GetCurrentHealth() > 1 and obj.bShowDamageNumbers:
+            if obj.GetOwner().TargetableComponent.IsHostile(self.pc):
+                obj.SetCurrentHealth(0)
+        return None
+
+    def run_effect(self):
+        if AmIHost():
+            add_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.POST, "insta_kill_hook", self.instakill)
+        else:
+            SendToHost(self)
+            self.display_name = "One Shot Kills"
+        return super().run_effect()
+    
+    def stop_effect(self):
+        if AmIHost():
+            remove_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.POST, "insta_kill_hook")
+            self.display_name = "One Shot Kills Off"
+        return super().stop_effect()

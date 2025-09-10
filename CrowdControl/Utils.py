@@ -55,6 +55,10 @@ def SendToHost(effect:Effect) -> None:
 
 LootPools = {
     "legendaryweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Legendary.ItemPool_Guns_Legendary", #quantiy:1
+    "purpleweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_VeryRare.ItemPool_Guns_VeryRare",
+    "blueweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Rare.ItemPool_Guns_Rare",
+    "greenweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Uncommon.ItemPool_Guns_Uncommon",
+    "whiteweapon": "/Game/GameData/Loot/ItemPools/Guns/ItemPool_Guns_Common.ItemPool_Guns_Common",
 }
 oak_blueprint_library = find_class("OakBlueprintLibrary").ClassDefaultObject
 

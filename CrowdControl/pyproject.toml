@@ -1,11 +1,11 @@
 [project]
 name = "CrowdControl"
-version = "1.0.0"
-authors = [{ name = "Pyrex" }]
+version = "1.0.1"
+authors = [{ name = "Pyrex, RedxYeti, Garwood, EpicNNG" }]
 description = "The companion mod for BL3 Crowd Control."
 
 [tool.sdkmod]
 name = "Crowd Control"
 license = {name = "GPL3", url = "https://choosealicense.com/licenses/gpl-3.0/" }
 supported_games = ["BL3"]
-version = "1.0.0"
+version = "1.0.1"
