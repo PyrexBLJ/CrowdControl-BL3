@@ -49,6 +49,26 @@ class SpawnEnemyEffect(Effect):
             SendToHost(self)
         return super().run_effect()
     
+class SpawnEnemyDupeEffect(Effect):
+    """
+    to add to this effect add the enemy name to the dict in utils and make a note on how many should spawn
+    you can also spawn enemies in your own effects by using the SpawnEnemy function in utils
+    """
+    effect_name = "spawn-enemy"
+    display_name = "Spawning an Enemy"
+
+    def run_effect(self):
+        if AmIHost():
+            if not self.pc:
+                pc = get_pc()
+            else:
+                pc = self.pc
+
+            SpawnEnemy(self.args[0], self.quantity, pc)
+        else:
+            SendToHost(self)
+        return super().run_effect()
+    
 class GiveCurrencyEffect(Effect):
     effect_name = "givecurrency"
     display_name = "Added Currency"

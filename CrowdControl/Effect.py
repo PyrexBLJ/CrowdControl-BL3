@@ -26,6 +26,7 @@ class Effect:
         self.viewers = None
         self.sourcedetails = None
         self.from_client: bool = False
+        self.quantity = None
         
 
     def run_effect(self, response:str = "Success", respond:bool = True):

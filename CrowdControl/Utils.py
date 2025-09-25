@@ -127,6 +127,32 @@ def get_spawner() -> UObject | None:
 EnemiesDict = {
     "loottink": "Loot Tink",
     "ratchswarm": "Ratch Swarm",
+    "psycho": "Psycho",
+    "jabber": "Jabber",
+    "skag": "Alpha Skag",
+    "spiderant": "Spiderant Drone",
+    "rakklesnake": "Rakk",
+    "ratch": "Ratchling",
+    "saurian": "Feral Grog",
+    "varkid": "Varkid Adult",
+    "wolven": "Hunter Wolven",
+    "bellik": "Tauran Bellik",
+    "tink": "Shotgun Tink",
+    "wraith": "Wraith",
+    "trooper": "Assault Trooper",
+    "nog": "NOG",
+    "heavy": "Pyrotech Heavy",
+    "nullhound": "SpecOps Nullhound",
+    "bot": "Deputy Bot",
+    "loader": "SGT Loader Mk II",
+    "skrit": "Skrit",
+    "rakk": "Badass Chromatic Rakk",
+    "ravager": "Ravager",
+    "atomic": "Atomic",
+    "hemo": "Hemovorous the Invincible",
+    "toc": "Tink of Cunning",
+    "sponge": "SpongeBoss BulletPants",
+    "fishslap": "FISH SLAP!",
 }
 import random 
 def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = "", is_friendly:bool = False) -> bool:
@@ -164,8 +190,8 @@ def SpawnEnemy(EnemyToSpawn:str, AmountToSpawn:int, PC:UObject, DisplayName = ""
         if i == 0:
             location = make_struct(
                 "Vector",
-                X=PCLoc.X + 500 * math.cos(math.radians(PCRot.Yaw)),
-                Y=PCLoc.Y + 500 * math.sin(math.radians(PCRot.Yaw)),
+                X=PCLoc.X + 1000 * math.cos(math.radians(PCRot.Yaw)),
+                Y=PCLoc.Y + 1000 * math.sin(math.radians(PCRot.Yaw)),
                 Z=PCLoc.Z
             )
         else:

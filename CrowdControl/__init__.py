@@ -106,7 +106,6 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                         print("Crowd Control: Effect redeemed while in a menu, retrying.")
                         return
 
-
                     eid = message["id"]
                     effect = message["code"]
                     viewer = message.get("viewer", "None")
@@ -114,18 +113,19 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                     sourcedetails = message.get("sourceDetails", None)
                     duration = message.get("duration", None)
                     parameters = message.get("parameters", None)
+                    quantity = message.get("quantity", None)
 
                     if duration:
                         duration /= 1000
 
                     if duration and parameters:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration, *parameters)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration, *parameters, quant=quantity)
                     elif parameters:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, *parameters)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, *parameters, quant=quantity)
                     elif duration:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration, quant=quantity)
                     else:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails)
+                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, quant=quantity)
 
     except Exception as e:
         print(f"CrowdControl Socket Error: {e}")
@@ -172,15 +172,16 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
         sourcedetails = request.get("sourceDetails", None)
         duration = request.get("duration", None)
         parameters = request.get("parameters", None)
+        quantity = request.get("quantity", None)
 
         if duration and parameters:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, *parameters)
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, *parameters, quant=quantity)
         elif parameters:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, *parameters)
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, *parameters, quant=quantity)
         elif duration:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration)
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, quant=quantity)
         else:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails)
+            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, quant=quantity)
 
     return None
 
