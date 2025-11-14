@@ -87,7 +87,6 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
         new("Spawn Skrit", "spawn-enemy_skrit") { Price = 100, Quantity = 25, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },
         new("Spawn Rakk", "spawn-enemy_rakk") { Price = 100, Quantity = 25, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },
         new("Spawn Ravager", "spawn-enemy_ravager") { Price = 100, Quantity = 25, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },
-        new("Spawn Wotan the Invincible", "spawn_Wotan") { Price = 1000, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },
         new("Spawn Atomic", "spawnenemy_atomic_1") { Price = 1000, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },
         new("Spawn Hemovorous the Invincible", "spawnenemy_hemo_1") { Price = 1000, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },
         new("Spawn Tink of Cunning", "spawnenemy_toc_1") { Price = 1000, Category = new EffectGrouping("Spawn Enemies"), Inactive = true },

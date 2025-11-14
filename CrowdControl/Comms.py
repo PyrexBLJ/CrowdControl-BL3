@@ -69,7 +69,7 @@ def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
         print(f"CrowdControl: Failed to send response: {e}")
 
 
-def RequestEffect(eid, effect_name, pc, viewer, viewers, source, quant, *args):
+def RequestEffect(eid, effect_name, pc, viewer, viewers, source, duration, quant, *args):
     extra_args = []
     
     if "spawnloot" in effect_name:
@@ -116,10 +116,11 @@ def RequestEffect(eid, effect_name, pc, viewer, viewers, source, quant, *args):
     effect_cls.viewer = viewer
     effect_cls.viewers = viewers
     effect_cls.sourcedetails = source
-    effect_cls.quantity = quant
+    if quant != None:
+        effect_cls.quantity = quant
 
     try:
-        effect_cls.duration = int(args[0]) if args else 0
+        effect_cls.duration = duration
     except Exception:
         effect_cls.duration = 0
 

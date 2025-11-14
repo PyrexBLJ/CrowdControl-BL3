@@ -6,7 +6,7 @@ from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
 from .Utils import SpawnLoot, SpawnEnemy, SpawnEnemyEx, AmIHost, SendToHost, GetPlayerCharacter
-from random import randint
+import random
 
 
 class SpawnLootEffect(Effect):
@@ -139,7 +139,7 @@ class HypeTrain(Effect):
             possible_names.append(self.sourcedetails["last_contribution"]["user_name"])
 
             try:
-                actor = SpawnEnemyEx(self.possible_enemies[randint(0, len(self.possible_enemies) - 1)], 1, self.pc, True)
+                actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc, True)
                 if actor == None:
                     return super().run_effect("Failed", respond)
                 #print(actor)
@@ -176,7 +176,7 @@ class HypeTrain(Effect):
                         if i > len(possible_names):
                             #print("all names have been used")
                             all_names_used = True
-                            name.DisplayName = possible_names[randint(0, len(possible_names) - 1)]
+                            name.DisplayName = possible_names[random.randint(0, len(possible_names) - 1)]
                     else:
                         name.DisplayName = picked_name
                         used_names.append(picked_name)

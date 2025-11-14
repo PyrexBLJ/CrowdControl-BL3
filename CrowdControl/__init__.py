@@ -119,13 +119,13 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                         duration /= 1000
 
                     if duration and parameters:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration, *parameters, quant=quantity)
+                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity, args=parameters)
                     elif parameters:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, *parameters, quant=quantity)
+                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, args=parameters, quant=quantity)
                     elif duration:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, duration, quant=quantity)
+                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity)
                     else:
-                        RequestEffect(eid, effect, get_pc(), viewer, viewers, sourcedetails, quant=quantity)
+                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, quant=quantity)
 
     except Exception as e:
         print(f"CrowdControl Socket Error: {e}")
@@ -175,13 +175,13 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
         quantity = request.get("quantity", None)
 
         if duration and parameters:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, *parameters, quant=quantity)
+            RequestEffect(eid=eid, effect_name=effect, pc=request["pc"], viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, args=parameters, quant=quantity)
         elif parameters:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, *parameters, quant=quantity)
+            RequestEffect(eid=eid, effect_name=effect, pc=request["pc"], viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, args=parameters, quant=quantity)
         elif duration:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, duration, quant=quantity)
+            RequestEffect(eid=eid, effect_name=effect, pc=request["pc"], viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity)
         else:
-            RequestEffect(eid, effect, request["pc"], viewer, viewers, sourcedetails, quant=quantity)
+            RequestEffect(eid=eid, effect_name=effect, pc=request["pc"], viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, quant=quantity)
 
     return None
 
