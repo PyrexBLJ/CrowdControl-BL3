@@ -3,7 +3,7 @@ import time
 import select
 import json
 import base64
-from mods_base import build_mod, hook, ButtonOption #type: ignore
+from mods_base import build_mod, hook, ButtonOption, DropdownOption #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type #type: ignore
 from typing import Any
@@ -36,6 +36,7 @@ buffer = b""
 connecting = False
 
 ResetConnection: ButtonOption = ButtonOption("Reset Connection To CC App", on_press = lambda _: connect_socket(host, port), description="If you didnt get the \"CrowdControl: Connected!\" message in the console (from opening the game before the cc app for example) click this button to retry the connection.")
+ViewerBadassCooldown: DropdownOption = DropdownOption("Viewer Badass Cooldown (mins)", "0", ["0", "5", "10", "15", "30", "60"], description="How many minutes to wait before another viewer badass is allowed to spawn after it dies.")
 
 def connect_socket(host, port):
     global client_socket, do_reset, connecting
@@ -98,8 +99,8 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
 
                 if message["type"] != 253:
                     if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'", "Level'/Game/Maps/MenuMap/Loader.Loader:PersistentLevel'"]:
-                        NotifyEffect(message["id"], "Failure", message["code"], get_pc())
-                        print("Crowd Control: Effect redeemed when it was not possible to activate, cancelled and viewer refunded.")
+                        NotifyEffect(message["id"], "Retry", message["code"], get_pc())
+                        print("Crowd Control: Effect redeemed when it was not possible to activate, retrying.")
                         return
                     elif get_pc().IsInMenu():
                         NotifyEffect(message["id"], "Retry", message["code"], get_pc())

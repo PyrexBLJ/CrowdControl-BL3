@@ -214,7 +214,8 @@ class ViewerBadass(Effect):
     def cooldown(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
         global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
         if viewer_badass_cooldown_enabled == True:
-            if (viewer_badass_cooldown_start_time + (get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents * 60)) <= time.time():
+            from . import ViewerBadassCooldown
+            if (viewer_badass_cooldown_start_time + (int(ViewerBadassCooldown.value) * 60)) <= time.time():
                 #print("viewer badass cooldown over, reenabling")
                 SetEffectStatus("viewer_badass", 0x82, self.pc)
                 viewer_badass_cooldown_enabled = False
@@ -225,10 +226,14 @@ class ViewerBadass(Effect):
         if str(obj) == str(self.viewer_pawn):
             global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
             viewer_badass_cooldown_start_time = time.time()
-            viewer_badass_cooldown_enabled = True
+            #viewer_badass_cooldown_enabled = True
             #print("starting viewer badass cooldown")
             self.display_name = f"{self.viewer} Died"
-            self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}. {get_pc().CurrentOakProfile.MinTimeBetweenBadassEvents} Minute Cooldown Started.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            from . import ViewerBadassCooldown
+            if int(ViewerBadassCooldown.value) > 0:
+                self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}. {ViewerBadassCooldown.value} Minute Cooldown Started.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            else:
+                self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
             add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown", self.cooldown)
             remove_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check")
         return None
@@ -236,7 +241,7 @@ class ViewerBadass(Effect):
     def run_effect(self):
         global viewer_badass_cooldown_enabled
         if viewer_badass_cooldown_enabled:
-            NotifyEffect(self.id, "Failure", self.effect_name, self.pc)
+            NotifyEffect(self.id, "Retry", self.effect_name, self.pc)
             return
         
         if AmIHost():
@@ -255,9 +260,10 @@ class ViewerBadass(Effect):
                 self.viewer_pawn = actor
                 SetEffectStatus(self.effect_name, 0x83, self.pc) # disable viewer badass button in the twitch integration for viewers until cooldown is done https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-class-messages
                 add_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check", self.trackdeaths)
+                viewer_badass_cooldown_enabled = True
                 return super().run_effect()
             else:
-                return super().run_effect("Failure")
+                return super().run_effect("Retry")
         else:
             SendToHost(self)
             return super().run_effect()
