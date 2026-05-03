@@ -6,126 +6,89 @@ from unrealsdk.hooks import Type, add_hook, remove_hook
 import math
 import random
 from unrealsdk import make_struct
-from .Utils import SpawnInteractiveObject,AmIHost,SendToHost,Net,Circle,InFrontOfPlayer,GetPlayerCharacter,SpawnEnemyEx
+from .Utils import AmIHost,SendToHost,Net,Circle,InFrontOfPlayer,GetPlayerCharacter, SpawnIO
+from .InteractiveObjectLists import InteractiveObjects
+
 
 class SuperHot(Effect):
-
     effect_name = "super_hot"
     display_name = "Super Hot"
 
-    def run_effect(self):
-        if AmIHost():
-            add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "speed_change", self.speed_change)
-        else:
-            SendToHost(self)
-        return super().run_effect()
-
-    def speed_change(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
-        if "MenuMap_P" not in str(ENGINE.GameViewport.World.Name):
-            if "Vehicle" in str(self.pc.Pawn):
-                if 1/720 * self.pc.Pawn.Speed <= 0.05:
-                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 0.05
+    def speed_change(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> None:
+        if str(ENGINE.GetCurrentWorldInfo().GetStreamingPersistentMapName().lower()) not in ["menumap", "loader", "exampleentry"]:
+            if "Vehicle" not in str(self.pc.Pawn):
+                if 1/720 * self.pc.Pawn.CurrentPawnSpeed <= 0.05:
+                    ENGINE.GetCurrentWorldInfo().TimeDilation = 0.05
                 else:
-                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1/720 * self.pc.Pawn.Speed
+                    ENGINE.GetCurrentWorldInfo().TimeDilation = 1/720 * self.pc.Pawn.CurrentPawnSpeed
             else:
-                if 1/720 * math.sqrt(self.pc.Pawn.GetVelocity().X**2 + self.pc.Pawn.GetVelocity().Y**2 + self.pc.Pawn.GetVelocity().Z**2) <= 0.05:
-                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 0.05
+                if 1/720 * math.sqrt(self.pc.Pawn.Velocity.X**2 + self.pc.Pawn.Velocity.Y**2 + self.pc.Pawn.Velocity.Z**2) <= 0.05:
+                    ENGINE.GetCurrentWorldInfo().TimeDilation = 0.05
                 else:
-                    ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1/720 * math.sqrt(self.pc.Pawn.GetVelocity().X**2 + self.pc.Pawn.GetVelocity().Y**2 + self.pc.Pawn.GetVelocity().Z**2)
-
-    def stop_effect(self):
-        remove_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "speed_change")
-        ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation = 1
-        return super().stop_effect()
-
-class SizeSteal(Effect):
-
-    effect_name = "size_steal"
-    display_name = "Size Steal"
-
-    def run_effect(self):
-        global PlayerListSize
+                    ENGINE.GetCurrentWorldInfo().TimeDilation = 1/720 * math.sqrt(self.pc.Pawn.Velocity.X**2 + self.pc.Pawn.Velocity.Y**2 + self.pc.Pawn.Velocity.Z**2)
+    
+    def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            PlayerListSize = []
-            for player in ENGINE.GameViewport.World.GameState.PlayerArray:
-                PlayerListSize.append(player.Owner.Pawn.GetActorScale3D())
-            add_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal", self.size_steal)
+            add_hook("WillowGame.WillowGameViewportClient:Tick", Type.POST, "speed_change", self.speed_change)
         else:
             SendToHost(self)
-        return super().run_effect()
-
-    def size_steal(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
-        obj.GetOwner().SetActorScale3D(make_struct("Vector" , X = obj.GetOwner().GetActorScale3D().X * (1/1.05), Y = obj.GetOwner().GetActorScale3D().Y * (1/1.05), Z = obj.GetOwner().GetActorScale3D().Z * (1/1.05)))
-        args.DamageCauser.GetOwner().SetActorScale3D(make_struct("Vector" , X = args.DamageCauser.GetOwner().GetActorScale3D().X * 1.05, Y = args.DamageCauser.GetOwner().GetActorScale3D().Y * 1.05, Z = args.DamageCauser.GetOwner().GetActorScale3D().Z * 1.05))
-
-    def stop_effect(self):
-        global PlayerListSize
-        I=0
-        remove_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.PRE, "size_steal")
-        for player in ENGINE.GameViewport.World.GameState.PlayerArray:
-            player.Owner.Pawn.SetActorScale3D(PlayerListSize[I])
-            I+=1
-        return super().stop_effect()
-
-class BarrelNet(Effect):
-
-    effect_name = "barrel_net"
-    display_name = "Barrel Net"
-
-    def run_effect(self):
-        if AmIHost():
-            PCRot = self.pc.pawn.K2_GetActorRotation()
-            PCLoc = Circle(self.pc.pawn.K2_GetActorLocation(),2,4,7,600,0,False)
-            for net in PCLoc:
-                actor = SpawnInteractiveObject(0,net,PCRot)
-                actor.BPI_SetSimulatePhysics(False)
-        else:
-            SendToHost(self)
-        return super().run_effect()
-
-class VendorBox(Effect):
-
-    effect_name = "vendor_box"
-    display_name = "Vendor Box"
-
-    def run_effect(self):
-        if AmIHost():
-            counter = 1
-            PCLoc = Circle(self.pc.pawn.K2_GetActorLocation(),1,0,4,150,-75,False)
-            for net in PCLoc:
-                PCRot = make_struct("Rotator", Roll =0, Pitch=0, Yaw=90*counter + 180)
-                SpawnInteractiveObject(counter,net,PCRot)
-                counter += 1
-        else:
-            SendToHost(self)
-        return super().run_effect()
-
+        return super().run_effect(response, respond)
+    
+    def stop_effect(self, response = "Finished", respond = True):
+        remove_hook("WillowGame.WillowGameViewportClient:Tick", Type.POST, "speed_change")
+        ENGINE.GetCurrentWorldInfo().TimeDilation = 1
+        return super().stop_effect(response, respond)
+    
 class RedChest(Effect):
-
     effect_name = "red_chest"
     display_name = "Red Chest"
 
-    def run_effect(self):
+    def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            PCRot = make_struct("Rotator", Roll =0, Pitch=0, Yaw=self.pc.Pawn.K2_GetActorRotation().Yaw + 180)
-            actor = SpawnInteractiveObject(5,make_struct("Vector", X=self.pc.Pawn.K2_GetActorLocation().X + (self.pc.GetActorForwardVector().X * 200), Y=self.pc.Pawn.K2_GetActorLocation().Y + (self.pc.GetActorForwardVector().Y * 200), Z=self.pc.Pawn.K2_GetActorLocation().Z - 75),PCRot)
+            rot = abs(GetPlayerCharacter(self.pc).Controller.Rotation.Yaw % 65535) + 16383
+            if rot > 65535:
+                rot -= 65535
+            PCRot = make_struct("Rotator", Pitch=0, Yaw=rot, Roll=0)
+            PCLoc = InFrontOfPlayer(self.pc)
+            PCLoc.Z -= 75
+            SpawnIO("redchest", 1, self.pc, PCLoc, PCRot)
         else:
             SendToHost(self)
-        return super().run_effect()
+        return super().run_effect(response, respond)
 
-class SpawnWotan(Effect):
+class VendorBox(Effect):
+    effect_name = "vendor_box"
+    display_name = "Vendor Box, hope you know how to nade jump."
 
-    effect_name = "spawn_Wotan"
-    display_name = "Spawn Wotan the Invincible"
+    vendors = ["weaponvendor", "ammovendor", "weaponvendor", "healthvendor"]
 
-    def run_effect(self):
+    def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            actor = SpawnEnemyEx("Wotan the Invincible", 1, self.pc)
-            if actor != None:
-                actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
-                actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel)
-            else:
-                return super().run_effect("Failure")
+            counter = 0
+            PCLoc = Circle(self.pc.Pawn.Location, 1, 0, 4, 90, -75, False)
+            for net in PCLoc:
+                yaw = 16383*counter + 49149
+                if yaw > 65535:
+                    yaw -= 65535
+                PCRot = make_struct("Rotator", Pitch = 0, Yaw= yaw, Roll= 0)
+                SpawnIO(self.vendors[counter], 1, self.pc, net, PCRot)
+                counter += 1
         else:
             SendToHost(self)
-        return super().run_effect()
+        return super().run_effect(response, respond)
+    
+class BarrelNet(Effect):
+    effect_name = "barrel_net"
+    display_name = "Barrel Net"
+
+    barrels = ["slagbarrel", "corrosivebarrel", "explosivebarrel", "shockbarrel", "firebarrel"]
+
+    def run_effect(self, response = "Success", respond = True):
+        if AmIHost():
+            PCRot = GetPlayerCharacter(self.pc).Controller.Rotation
+            PCLoc = Circle(GetPlayerCharacter(self.pc).Location, 2, 4, 7, 500, 0, False)
+            for net in PCLoc:
+                SpawnIO(random.choice(self.barrels), 1, self.pc, net, PCRot)
+        else:
+            SendToHost(self)
+        return super().run_effect(response, respond)
