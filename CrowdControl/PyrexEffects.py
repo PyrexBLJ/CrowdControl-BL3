@@ -1,33 +1,37 @@
 from .Effect import Effect
-from .Utils import GetPlayerCharacter, AmIHost, SendToHost, SpawnPawn, SpawnChubby, Spawnlootboi, Circle, SpawnIO, InFrontOfPlayer
+from .Utils import GetPlayerCharacter, AmIHost, SpawnEnemyEx, SendToHost
 from .Comms import SetEffectStatus, NotifyEffect
-from .EnemySpawnerLists import Chubbies, lootbois
 from mods_base import get_pc, ENGINE #type: ignore
 import unrealsdk #type: ignore
-from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct, IGNORE_STRUCT #type: ignore
-from unrealsdk.hooks import Type, add_hook, remove_hook, Block #type: ignore
+from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
+from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
 import random
 import time
-
+#
+#
+#   number of near crash outs trying to get comms and coop working properly: 4
+#
+#
 viewer_badass_cooldown_enabled: bool = False
 viewer_badass_cooldown_start_time: float = 0.0
 
+
 class NoGravity(Effect):
-    effect_name = "low_gravity"
-    display_name = "Low Player Gravity"
+    effect_name = "no_gravity"
+    display_name = "No Gravity"
 
     def run_effect(self, response = "Finished"):
         if AmIHost():
-            GetPlayerCharacter(self.pc).CustomGravityScaling = 0.1
+            GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 0.0
         else:
             SendToHost(self)
-        self.display_name = "Low Gravity"
+        self.display_name = "No Gravity"
         return super().run_effect(response)
 
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
-            GetPlayerCharacter(self.pc).CustomGravityScaling = 1.0
+            GetPlayerCharacter(self.pc).OakCharacterMovement.GravityScale = 1.0
         self.display_name = "Normal Gravity"
         return super().stop_effect(response, respond)
     
@@ -37,7 +41,18 @@ class InstantDeath(Effect):
 
     def run_effect(self):
         if AmIHost():
-            self.pc.CausePlayerDeath(False)
+            character = self.pc.OakCharacter
+            if character == None:
+                self.pc.AcknowledgedPawn.DamageComponent.SetCurrentHealth(0)
+                GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(0)
+                GetPlayerCharacter(self.pc).BPFightForYourLifeComponent.DownStateTimeExpired(self.pc.OakCharacter.BPFightForYourLifeComponent.DownTimeResourcePool)
+            elif "IronBear" in str(character):
+                self.pc.OakCharacter.OnExiting(True)
+                GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(0)
+                GetPlayerCharacter(self.pc).BPFightForYourLifeComponent.DownStateTimeExpired(self.pc.OakCharacter.BPFightForYourLifeComponent.DownTimeResourcePool)
+            else:
+                GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(0)
+                GetPlayerCharacter(self.pc).BPFightForYourLifeComponent.DownStateTimeExpired(self.pc.OakCharacter.BPFightForYourLifeComponent.DownTimeResourcePool)
         else:
             SendToHost(self)
         return super().run_effect()
@@ -48,28 +63,14 @@ class DropEntireInventory(Effect):
 
     def run_effect(self):
         if AmIHost():
-            for item in GetPlayerCharacter(self.pc).EquippedItems:
-                if item != None:
-                    GetPlayerCharacter(self.pc).InvManager.InventoryUnreadied(item, True)
-
-            # man this is cooked
-            for weapon in range(len(GetPlayerCharacter(self.pc).HolsteredWeaponSlots) * 2 + 2):
-                GetPlayerCharacter(self.pc).InvManager.InventoryUnreadied(GetPlayerCharacter(self.pc).HolsteredWeaponSlots[0], True)
-
-            GetPlayerCharacter(self.pc).InvManager.InventoryUnreadied(GetPlayerCharacter(self.pc).Weapon, True)
-            
-            throwindex = 0
-            items = len(GetPlayerCharacter(self.pc).InvManager.Backpack)
-
-            while items > 0:
-                if GetPlayerCharacter(self.pc).InvManager.Backpack[throwindex].CanThrow():
-                    GetPlayerCharacter(self.pc).InvManager.ThrowBackpackInventory(GetPlayerCharacter(self.pc).InvManager.Backpack[throwindex])
+            numofitems: int = len(GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items)
+            dropindex: int = 0
+            while numofitems > 0:
+                if GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items[dropindex].PlayerDroppability == 0 and str(GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items[dropindex].BaseCategoryDefinition) not in ("InventoryCategoryData'/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money'", "InventoryCategoryData'/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Eridium.InventoryCategory_Eridium'"):
+                    GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items[dropindex].Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
                 else:
-                    throwindex += 1
-                items -= 1
-            
-            
-            #this was so much easier in bl3 bruh
+                    dropindex += 1
+                numofitems -= 1
         else:
             SendToHost(self)
         return super().run_effect()
@@ -79,30 +80,67 @@ class DeleteGroundItems(Effect):
 
     def run_effect(self):
         if AmIHost():
-            willowglobals = unrealsdk.find_class("WillowGlobals").ClassDefaultObject.GetWillowGlobals()
-            ognumberofitems: int = len(willowglobals.PickupList)
-            numberofitems: int = len(willowglobals.PickupList)
+            ognumberofitems: int = len(ENGINE.GameViewport.World.GameState.PickupList)
+            numberofitems: int = len(ENGINE.GameViewport.World.GameState.PickupList)
             deleteindex: int = 0
             combinedvalue: int = 0
             while numberofitems > 0:
-                if not willowglobals.PickupList[deleteindex].bIsMissionItem:
+                if "RarityData_00_Mission" not in str(ENGINE.GameViewport.World.GameState.PickupList[deleteindex].AssociatedInventoryRarityData) and "GunRack" not in str(ENGINE.GameViewport.World.GameState.PickupList[deleteindex]):
                     try:
-                        combinedvalue += willowglobals.PickupList[deleteindex].Inventory.MonetaryValue
+                        combinedvalue += ENGINE.GameViewport.World.GameState.PickupList[deleteindex].CachedInventoryBalanceComponent.MonetaryValue
                     except:
                         pass
-                    willowglobals.PickupList[deleteindex].Behavior_Destroy()
+                    ENGINE.GameViewport.World.GameState.PickupList[deleteindex].K2_DestroyActor_DEPRECATED()
                     numberofitems -= 1
                 else:
                     deleteindex += 1
                     numberofitems -= 1
             
-            for player in ENGINE.GetCurrentWorldInfo().GRI.PRIArray:
-                player.Currency[0].CurrentAmount += combinedvalue
+            for player in ENGINE.GameViewport.World.GameState.PlayerArray:
+                player.Owner.ServerAddCurrency(combinedvalue, unrealsdk.find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money"))
             self.display_name = f"{ognumberofitems - deleteindex} Items Deleted"
             combinedvalue = 0
         else:
             SendToHost(self)
         return super().run_effect()
+    
+class FallDamage(Effect):
+    effect_name = "fall_damage"
+    display_name = "Fall Damage"
+
+    def dofalldamage(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+        fallvelocity = min(obj.OakCharacterMovement.Velocity.Z * -1, 4000)
+        if fallvelocity > 950:
+            fallvelocity -= 1000
+
+            totalhp = obj.OakDamageComponent.GetTotalMaxHealth()
+            shield = obj.OakDamageComponent.GetCurrentShield()
+            health = obj.OakDamageComponent.GetCurrentHealth()
+
+            fallpercentage = (fallvelocity / 3000) * 100
+            maxfalldamage = totalhp * (50 / 100)
+            totaldamage = maxfalldamage * fallpercentage / 100
+
+            if shield - totaldamage < 0:
+                totaldamage -= shield
+                obj.OakDamageComponent.SetCurrentShield(0)
+                obj.OakDamageComponent.SetCurrentHealth(health - totaldamage)
+            else:
+                obj.OakDamageComponent.SetCurrentShield(shield - totaldamage)
+        return None
+    
+    def run_effect(self):
+        if AmIHost():
+            add_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook", self.dofalldamage)
+        else:
+            SendToHost(self)
+        return super().run_effect()
+    
+    def stop_effect(self):
+        if AmIHost():
+            remove_hook("/Game/PlayerCharacters/_Shared/_Design/Character/BPChar_Player.BPChar_Player_C:OnLanded", Type.PRE, "fall_damage_hook")
+        self.display_name = "No More Fall Damage"
+        return super().stop_effect()
     
 class DropHeldWeapon(Effect):
     effect_name = "drop_held_weapon"
@@ -110,7 +148,9 @@ class DropHeldWeapon(Effect):
 
     def run_effect(self):
         if AmIHost():
-            self.pc.ThrowWeapon()
+            for item in GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items:
+                if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).ActiveWeapons.WeaponSlots[0].AttachedWeapon):
+                    GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(item.Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
         else:
             SendToHost(self)
         return super().run_effect()
@@ -121,15 +161,9 @@ class DropEquippedShield(Effect):
 
     def run_effect(self):
         if AmIHost():
-            shieldToThrow = None
-            for item in GetPlayerCharacter(self.pc).EquippedItems:
-                if item != None:
-                    if "WillowShield" in str(item.Class):
-                        shieldToThrow = item.DefinitionData.UniqueId
-                        GetPlayerCharacter(self.pc).InvManager.InventoryUnreadied(item, True)
-            for thing in GetPlayerCharacter(self.pc).InvManager.Backpack:
-                if thing.DefinitionData.UniqueId == shieldToThrow:
-                    GetPlayerCharacter(self.pc).InvManager.ThrowBackpackInventory(thing)
+            for item in GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items:
+                if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).EquippedInventory.InventorySlots[1].EquippedInventory):
+                    GetPlayerCharacter(self.pc).GetInventoryComponent().ServerDropItem(item.Handle, self.pc.Pawn.K2_GetActorLocation(), self.pc.K2_GetActorRotation())
         else:
             SendToHost(self)
         return super().run_effect()
@@ -140,7 +174,10 @@ class NoAmmo(Effect):
 
     def run_effect(self):
         if AmIHost():
-            GetPlayerCharacter(self.pc).Weapon.AmmoPool.Data.SetCurrentValue(0)
+            for item in GetPlayerCharacter(self.pc).GetInventoryComponent().InventoryList.Items:
+                if str(item.StoredActor) == str(GetPlayerCharacter(self.pc).ActiveWeapons.WeaponSlots[0].AttachedWeapon):
+                    item.StoredActor.UseModeState[0].AmmoComponent.ResourcePool.PoolManager.ResourcePools[item.StoredActor.UseModeState[0].AmmoComponent.ResourcePool.PoolIndexInManager].CurrentValue = 0
+                    item.StoredActor.UseModeState[0].AmmoComponent.LoadedAmmo = 0
         else:
             SendToHost(self)
         return super().run_effect()
@@ -151,18 +188,93 @@ class ResetSkillTrees(Effect):
 
     def run_effect(self):
         if AmIHost():
-            self.pc.PlayerReplicationInfo.GeneralSkillPoints += self.pc.ResetSkillTree(True)
+            GetPlayerCharacter(self.pc).OakPlayerAbilityManager.PurchaseAbilityRespec()
         else:
             SendToHost(self)
         return super().run_effect()
     
+class ViewerBadass(Effect):
+    effect_name = "viewer_badass"
+    display_name = "Summoning Viewer Badass"
+
+    viewer_pawn = None
+
+    possible_enemies = ["Badass CryptoSec Commando", 
+                        "Badass Goliath", 
+                        "Badass Psycho", 
+                        "Badass Jabber", 
+                        "Badass Wardog", 
+                        "Badass Wraith",  
+                        "Badass Major",
+                        "Badass Loader",
+                        "Super Badass Marauder",
+                        "Dark Badass NOG",
+                        "Elite Badass Ratch"]
+
+    def cooldown(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+        global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
+        if viewer_badass_cooldown_enabled == True:
+            from . import ViewerBadassCooldown
+            if (viewer_badass_cooldown_start_time + (int(ViewerBadassCooldown.value) * 60)) <= time.time():
+                #print("viewer badass cooldown over, reenabling")
+                SetEffectStatus("viewer_badass", 0x82, self.pc)
+                viewer_badass_cooldown_enabled = False
+                remove_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown")
+        return None
+
+    def trackdeaths(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
+        if str(obj) == str(self.viewer_pawn):
+            global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
+            viewer_badass_cooldown_start_time = time.time()
+            #viewer_badass_cooldown_enabled = True
+            #print("starting viewer badass cooldown")
+            self.display_name = f"{self.viewer} Died"
+            from . import ViewerBadassCooldown
+            if int(ViewerBadassCooldown.value) > 0:
+                self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}. {ViewerBadassCooldown.value} Minute Cooldown Started.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            else:
+                self.pc.DisplayRolloutNotification("CrowdControl", f"{self.display_name}.", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+            add_hook("/Script/Engine.HUD:ReceiveDrawHUD", Type.PRE, "viewer_badass_cooldown", self.cooldown)
+            remove_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check")
+        return None
+
+    def run_effect(self):
+        global viewer_badass_cooldown_enabled
+        if viewer_badass_cooldown_enabled:
+            NotifyEffect(self.id, "Retry", self.effect_name, self.pc)
+            return
+        
+        if AmIHost():
+            self.display_name = f"Summoning {self.viewer}"
+            actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc)
+            if actor != None:
+                #print(actor)
+                sed = unrealsdk.find_class("StreamingEventDispatcher").ClassDefaultObject
+                actor.AIBalanceState.SetGameStage(int(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel) + 3)
+                actor.AIBalanceState.SetExperienceLevel(int(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel) + 3)
+                sed.SetEventEnemy(actor)
+                sed.SetEventEnemyName(self.viewer)
+                unrealsdk.load_package("/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss")
+                actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
+                actor.AIBalanceState.DropOnDeathItemPools.ItemPoolLists.append(unrealsdk.find_object("ItemPoolListData", "/Game/GameData/Loot/ItemPools/ItemPoolList_MiniBoss.ItemPoolList_MiniBoss"))
+                self.viewer_pawn = actor
+                SetEffectStatus(self.effect_name, 0x83, self.pc) # disable viewer badass button in the twitch integration for viewers until cooldown is done https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-class-messages
+                add_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "viewer_badass_death_check", self.trackdeaths)
+                viewer_badass_cooldown_enabled = True
+                return super().run_effect()
+            else:
+                return super().run_effect("Retry")
+        else:
+            SendToHost(self)
+            return super().run_effect()
+        
 class FastGameSpeed(Effect):
     effect_name = "fast_game_speed"
     display_name = "4x Speed"
 
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            ENGINE.GetCurrentWorldInfo().TimeDilation = 4.0
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 4.0
         else:
             SendToHost(self)
         self.display_name = "4x Speed"
@@ -170,7 +282,7 @@ class FastGameSpeed(Effect):
     
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
-            ENGINE.GetCurrentWorldInfo().TimeDilation = 1.0
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 1.0
         self.display_name = "Normal Speed"
         return super().stop_effect(response, respond)
     
@@ -180,7 +292,7 @@ class SlowGameSpeed(Effect):
 
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            ENGINE.GetCurrentWorldInfo().TimeDilation = 0.5
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 0.5
         else:
             SendToHost(self)
             self.display_name = "0.5x Speed"
@@ -188,7 +300,7 @@ class SlowGameSpeed(Effect):
     
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
-            ENGINE.GetCurrentWorldInfo().TimeDilation = 1.0
+            ENGINE.GameViewport.World.CurrentLevel.WorldSettings.TimeDilation = 1.0
         self.display_name = "Normal Speed"
         return super().stop_effect(response, respond)
     
@@ -198,20 +310,18 @@ class FlyMode(Effect):
 
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            pawn = self.pc.Pawn
-            self.pc.Pawn.LandMovementState = "PlayerFlying"
-            self.pc.Unpossess()
-            self.pc.Possess(pawn, False)
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MovementMode = 5
+            GetPlayerCharacter(self.pc).OakDamageComponent.MinimumDamageLaunchVelocity = 9999999999
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MaxFlySpeed.Value = 5000
         else:
             SendToHost(self)
         return super().run_effect(response, respond)
     
     def stop_effect(self, response = "Finished", respond = True):
         if AmIHost():
-            pawn = self.pc.Pawn
-            self.pc.Pawn.LandMovementState = "PlayerWalking"
-            self.pc.Unpossess()
-            self.pc.Possess(pawn, False)
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MovementMode = 1
+            GetPlayerCharacter(self.pc).OakDamageComponent.MinimumDamageLaunchVelocity = 370
+            GetPlayerCharacter(self.pc).OakCharacterMovement.MaxFlySpeed.Value = 600
         self.display_name = "rip flight"
         return super().stop_effect(response, respond)
     
@@ -221,55 +331,98 @@ class FullAmmo(Effect):
 
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            for ammopool in self.pc.ResourcePoolManager.ResourcePools:
-                if ammopool is None:
-                    continue
-                if ammopool.Class.Name in ("AmmoResourcePool") or ammopool.Definition.Resource.Name == "Ammo_Grenade_Protean":
-                    if ammopool.Definition.Resource.Name == "Ammo_Rocket_Launcher":
-                        ammopool.SetCurrentValue(ammopool.GetMaxValue(False))
-                    elif ammopool.Definition.Resource.Name == "Ammo_Grenade_Protean":
-                        ammopool.SetCurrentValue(ammopool.GetMaxValue(False))
-                    else:
-                        ammopool.SetCurrentValue(ammopool.GetMaxValue(False))
+            for pool in GetPlayerCharacter(self.pc).ResourcePoolComponent.ResourcePools:
+                if "Ammo" in str(pool) and "Eridium" not in str(pool):
+                    pool.CurrentValue = pool.MaxValue.Value
         else:
             SendToHost(self)
         return super().run_effect(response, respond)
     
-class SpawnTubby(Effect):
-    effect_name = "spawn_chubby"
-    display_name = "Spawning Chubby"
+class MoxxTail(Effect):
+    effect_name = "moxx_tail"
+    display_name = "Moxxtail Effect Given"
 
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            SpawnChubby(self.quantity, self.pc)
+            StreamerBoosterData = unrealsdk.find_object("StreamerBoosterData", "/Game/PatchDLC/Hibiscus/Streaming/Data/MoxxiStreamerBoosterData.MoxxiStreamerBoosterData")
+
+            if StreamerBoosterData == None:
+                return super().run_effect("Failure")
+
+            statuseffect1: int = random.randint(0, len(StreamerBoosterData.PrimaryBoosterInfos) - 1)
+            statuseffect2: int = random.randint(0, len(StreamerBoosterData.SecondaryBoosterInfos) - 1)
+
+            primaryeffect = unrealsdk.make_struct("StatusEffectSpec", StatusEffectData=StreamerBoosterData.PrimaryBoosterInfos[statuseffect1].StatusEffectData, EffectOwner=self.pc, EffectOwnerContextOverride=self.pc, DurationType=0, Duration=self.duration, EffectInstigator=self.pc, DamageCauser=None, DamagePerSecond=0.0)
+            secondaryeffect = unrealsdk.make_struct("StatusEffectSpec", StatusEffectData=StreamerBoosterData.SecondaryBoosterInfos[statuseffect2].StatusEffectData, EffectOwner=self.pc, EffectOwnerContextOverride=self.pc, DurationType=0, Duration=self.duration, EffectInstigator=self.pc, DamageCauser=None, DamagePerSecond=0.0)
+
+            GetPlayerCharacter(self.pc).StatusEffectManagerComponent.AddStatusEffect(primaryeffect)
+            GetPlayerCharacter(self.pc).StatusEffectManagerComponent.AddStatusEffect(secondaryeffect)
+
+            self.display_name = f"Moxxtail {StreamerBoosterData.PrimaryBoosterInfos[statuseffect1].DisplayName} + {StreamerBoosterData.SecondaryBoosterInfos[statuseffect2].DisplayName} Activated!"
         else:
             SendToHost(self)
         return super().run_effect(response, respond)
     
-class SpawnLootMidget(Effect):
-    effect_name = "spawn_lootboi"
-    display_name = "Spawning Loot Midget"
+    def stop_effect(self, response = "Finished", respond = True):
+        self.display_name = "Moxxtail Booster Expired"
+        return super().stop_effect(response, respond)
+    
+class CSBooster(Effect):
+    effect_name = "csbooster"
+    display_name = "Citizen Science Booster Given"
 
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
-            Spawnlootboi(self.quantity, self.pc)
+            if "xp" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(0, self.duration)
+                self.display_name = "Brain Nanobots Given"
+            elif "cash" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(1, self.duration)
+                self.display_name = "Lucky Jabber Foot Given"
+            elif "speed" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(2, self.duration)
+                self.display_name = "Caffeine Caplets Given"
+            elif "damage" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(3, self.duration)
+                self.display_name = "Jabber-Cola Given"
+            elif "element" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(4, self.duration)
+                self.display_name = "Elemental Powder Given"
+            elif "loot" in self.args:
+                self.pc.ServerApplyCitizenScienceBooster(5, self.duration)
+                self.display_name = "Butt Stallion Milk Given"
         else:
             SendToHost(self)
         return super().run_effect(response, respond)
     
-class OneShotKills(Effect):
+    def stop_effect(self, response = "Finished", respond = True):
+        if "xp" in self.args:
+            self.display_name = "Brain Nanobots Expired"
+        elif "cash" in self.args:
+            self.display_name = "Lucky Jabber Foot Expired"
+        elif "speed" in self.args:
+            self.display_name = "Caffeine Caplets Expired"
+        elif "damage" in self.args:
+            self.display_name = "Jabber-Cola Expired"
+        elif "element" in self.args:
+            self.display_name = "Elemental Powder Expired"
+        elif "loot" in self.args:
+            self.display_name = "Butt Stallion Milk Expired"
+        return super().stop_effect(response, respond)
+    
+class OneShot(Effect):
     effect_name = "one_shot"
     display_name = "One Shot Kills"
 
     def instakill(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
-        if obj.HealthPool.Data.GetCurrentValue() > 1 and not obj.bIsDead:
-            if obj.Allegiance.ConsidersEnemy(unrealsdk.find_object("PawnAllegiance", "GD_AI_Allegiance.Allegiance_Player")):
-                obj.HealthPool.Data.SetCurrentValue(0)
+        if obj.GetCurrentHealth() > 1 and obj.bShowDamageNumbers:
+            if obj.GetOwner().TargetableComponent.IsHostile(self.pc):
+                obj.SetCurrentHealth(0)
         return None
 
     def run_effect(self):
         if AmIHost():
-            add_hook("WillowGame.WillowAIPawn:TakeDamage", Type.POST, "insta_kill_hook", self.instakill)
+            add_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.POST, "insta_kill_hook", self.instakill)
         else:
             SendToHost(self)
             self.display_name = "One Shot Kills"
@@ -277,248 +430,6 @@ class OneShotKills(Effect):
     
     def stop_effect(self):
         if AmIHost():
-            remove_hook("WillowGame.WillowAIPawn:TakeDamage", Type.POST, "insta_kill_hook")
+            remove_hook("/Script/GbxGameSystemCore.DamageComponent:ReceiveAnyDamage", Type.POST, "insta_kill_hook")
             self.display_name = "One Shot Kills Off"
         return super().stop_effect()
-    
-class DefinitelyRealViewerBadass(Effect):
-    effect_name = "viewer_badass"
-    display_name = "Summoning Viewer Badass"
-
-    viewer_pawn = None
-
-    possible_enemies = [
-        "docmercy",
-        "muscles",
-        "smashhead",
-        "bonehead2",
-        "madmike",
-        "kingmong",
-        "savagelee",
-        "sheriffoflynchwood",
-        "blackqueen",
-        "oldslappy",
-        "spycho",
-        "ralph",
-        "gettle",
-        "assassinrouf",
-        "tectorhodunk",
-    ]
-
-    def cooldown(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
-        global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
-        if viewer_badass_cooldown_enabled == True:
-            from . import ViewerBadassCooldown
-            if (viewer_badass_cooldown_start_time + (int(ViewerBadassCooldown.value) * 60)) <= time.time():
-                SetEffectStatus("viewer_badass", 0x82, self.pc)
-                viewer_badass_cooldown_enabled = False
-                remove_hook("WillowGame.WillowGameViewportClient:Tick", Type.PRE, "viewer_badass_cooldown")
-        return None
-    
-    def trackdeaths(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
-        if str(obj) == str(self.viewer_pawn):
-            global viewer_badass_cooldown_enabled, viewer_badass_cooldown_start_time
-            viewer_badass_cooldown_start_time = time.time()
-            self.display_name = f"{self.viewer} Died"
-            from . import ViewerBadassCooldown
-            if int(ViewerBadassCooldown.value) > 0:
-                hud = self.pc.GetHUDMovie()
-                if hud != None:
-                    hud.ClearTrainingText()
-                    hud.AddTrainingText(f"{self.display_name}. {ViewerBadassCooldown.value} Minute Cooldown Started.", "Crowd Control", 3.5 * ENGINE.GetCurrentWorldInfo().TimeDilation, unrealsdk.make_struct("Color"), "", False, 0, self.pc.PlayerReplicationInfo, True, 0)
-            else:
-                hud = self.pc.GetHUDMovie()
-                if hud != None:
-                    hud.ClearTrainingText()
-                    hud.AddTrainingText(f"{self.display_name}.", "Crowd Control", 3.5 * ENGINE.GetCurrentWorldInfo().TimeDilation, unrealsdk.make_struct("Color"), "", False, 0, self.pc.PlayerReplicationInfo, True, 0)
-            add_hook("WillowGame.WillowGameViewportClient:Tick", Type.PRE, "viewer_badass_cooldown", self.cooldown)
-            remove_hook("Engine.Pawn:UnPossessed", Type.PRE, "viewer_badass_death_check")
-        return None
-    
-    def run_effect(self):
-        global viewer_badass_cooldown_enabled
-        if viewer_badass_cooldown_enabled:
-            NotifyEffect(self.id, "Retry", self.effect_name, self.pc)
-            return
-        
-        if AmIHost():
-            self.display_name = f"Summoning {self.viewer}"
-            actor = SpawnPawn(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc, self.viewer, False, 3)
-            if actor[0] != None:
-                self.viewer_pawn = actor[0]
-                SetEffectStatus(self.effect_name, 0x83, self.pc)
-                add_hook("Engine.Pawn:UnPossessed", Type.PRE, "viewer_badass_death_check", self.trackdeaths)
-                viewer_badass_cooldown_enabled = True
-                return super().run_effect()
-            else:
-                return super().run_effect("Retry")
-        else:
-            SendToHost(self)
-            return super().run_effect()
-        
-#py get_pc().PostAkEvent(unrealsdk.find_object("AkEvent", "Ake_VO_Episode_15.Ak_Play_VO_Ep15_Pt4_07_echo_Brick")) buzzards nest line
-
-class FallDamage(Effect):
-    effect_name = "fall_damage"
-    display_name = "Fall Damage"
-
-    def dofalldamage(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
-        fallvelocity = min(obj.Velocity.Z * -1, 4000)
-        if fallvelocity > 950:
-            fallvelocity -= 1000
-
-            totalhp = obj.HealthPool.Data.GetMaxValue() + obj.ShieldArmor.Data.GetMaxValue()
-            shield = obj.ShieldArmor.Data.GetCurrentValue()
-            health = obj.HealthPool.Data.GetCurrentValue()
-
-            fallpercentage = (fallvelocity / 3000) * 100
-            maxfalldamage = totalhp * (50 / 100)
-            totaldamage = maxfalldamage * fallpercentage / 100
-
-            if shield - totaldamage < 0:
-                print(f"shield damage: {shield}")
-                totaldamage -= shield
-                print(f"health damage: {totaldamage}")
-                obj.ShieldArmor.Data.SetCurrentValue(0)
-                obj.HealthPool.Data.SetCurrentValue(health - totaldamage)
-            else:
-                print(f"shield damage: {totaldamage}")
-                obj.ShieldArmor.Data.SetCurrentValue(shield - totaldamage)
-        return None
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            add_hook("WillowGame.WillowPlayerPawn:Landed", Type.PRE, "fall_damage_hook", self.dofalldamage)
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-    
-    def stop_effect(self, response = "Finished", respond = True):
-        if AmIHost():
-            remove_hook("WillowGame.WillowPlayerPawn:Landed", Type.PRE, "fall_damage_hook")
-        self.display_name = "No More Fall Damage"
-        return super().stop_effect(response, respond)
-
-class GambaTime(Effect):
-    effect_name = "gamba_time"
-    display_name = "Lets go gambling!"
-
-    slots = ["normalslotmachine", "eridiumslotmachine", "torgueslotmachine"]
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            counter = 0
-            for spot in Circle(GetPlayerCharacter(self.pc).Location, 1, 0, 8, 250, -75, False):
-                yaw = 49149
-                PCRot = unrealsdk.make_struct("Rotator", Pitch = 0, Yaw= yaw, Roll= 0)
-                if counter <= 2:
-                    SpawnIO(self.slots[counter], 1, self.pc, spot, PCRot)
-                counter += 1
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-
-class StretchTime(Effect):
-    effect_name = "stretch_time"
-    display_name = "Stretch Time. Look Up!"
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            GetPlayerCharacter(self.pc).ViewPitchMax = 65535
-            GetPlayerCharacter(self.pc).ViewPitchMin = -65535
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-    
-    def stop_effect(self, response = "Finished", respond = True):
-        if AmIHost():
-            GetPlayerCharacter(self.pc).ViewPitchMax = 16383
-            GetPlayerCharacter(self.pc).ViewPitchMin = -16384
-        self.display_name = "aight good stretch"
-        return super().stop_effect(response, respond)
-    
-class PainfulPlants(Effect):
-    effect_name = "painful_plants"
-    display_name = "Painful Plants"
-
-    plants = ["shockcactus", "firemelon", "acidolus"]
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            PCRot = GetPlayerCharacter(self.pc).Controller.Rotation
-            PCLoc = Circle(GetPlayerCharacter(self.pc).Location, 3, 4, 7, 700, 0, False)
-            for net in PCLoc:
-                SpawnIO(random.choice(self.plants), 1, self.pc, net, PCRot)
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-    
-class SpawnCandies(Effect):
-    effect_name = "spawn_candy"
-    display_name = "Have some candy"
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            obj = unrealsdk.construct_object("Behavior_SpawnLootAroundPoint", ENGINE.Outer)
-            obj.ItemPools = [unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_BlueCandy"), 
-                                    unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_GreenCandy"), 
-                                    unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_RedCandy"), 
-                                    unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_YellowCandy"), ]
-            obj.SpawnVelocityRelativeTo = 0
-            obj.bTorque = False
-            obj.CircularScatterRadius = 300
-            obj.CustomLocation = unrealsdk.make_struct("AttachmentLocationData", Location=InFrontOfPlayer(self.pc, 200), AttachmentBase=None, AttachmentName="")
-            obj.ApplyBehaviorToContext(get_pc(), IGNORE_STRUCT, None, None, None, IGNORE_STRUCT)
-        return super().run_effect(response, respond)
-
-class FastMovement(Effect):
-    effect_name = "fast_movement"
-    display_name = "Fast Movement"
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            self.pc.ConsoleCommand("set willowplayerpawn groundspeed 1200")
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-    
-    def stop_effect(self, response = "Finished", respond = True):
-        if AmIHost():
-            self.pc.ConsoleCommand("set willowplayerpawn groundspeed 440")
-        return super().stop_effect(response, respond)
-    
-class SpawnWisps(Effect):
-    effect_name = "spawn_wisps"
-    display_name = "Have some wisp jars"
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            obj = unrealsdk.construct_object("Behavior_SpawnLootAroundPoint", ENGINE.Outer)
-            obj.ItemPools = [unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_Wisp"), 
-                                    unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_Wisp"), 
-                                    unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_Wisp"), 
-                                    unrealsdk.find_object("ItemPoolDefinition", "GD_Flax_ItemPools.Items.ItemPool_Flax_Wisp"), ]
-            obj.SpawnVelocityRelativeTo = 0
-            obj.bTorque = False
-            obj.CircularScatterRadius = 300
-            obj.CustomLocation = unrealsdk.make_struct("AttachmentLocationData", Location=InFrontOfPlayer(self.pc, 200), AttachmentBase=None, AttachmentName="")
-            obj.ApplyBehaviorToContext(get_pc(), IGNORE_STRUCT, None, None, None, IGNORE_STRUCT)
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-    
-class LowWorldGravity(Effect):
-    effect_name = "low_world_gravity"
-    display_name = "Low World Gravity"
-
-    def run_effect(self, response = "Success", respond = True):
-        if AmIHost():
-            ENGINE.GetCurrentWorldInfo().WorldGravityZ = -75
-        else:
-            SendToHost(self)
-        return super().run_effect(response, respond)
-    
-    def stop_effect(self, response = "Finished", respond = True):
-        if AmIHost():
-            ENGINE.GetCurrentWorldInfo().WorldGravityZ = -500
-        self.display_name = "Normal World Gravity"
-        return super().stop_effect(response, respond)

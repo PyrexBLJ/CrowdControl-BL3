@@ -5,7 +5,7 @@ from mods_base import get_pc, ENGINE #type: ignore
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type, add_hook, remove_hook #type: ignore
 from typing import Any
-from .Utils import AmIHost, SendToHost, GetPlayerCharacter, SpawnLoot, SpawnPawn
+from .Utils import SpawnLoot, SpawnEnemy, SpawnEnemyEx, AmIHost, SendToHost, GetPlayerCharacter
 import random
 
 
@@ -44,7 +44,7 @@ class SpawnEnemyEffect(Effect):
             else:
                 pc = self.pc
 
-            #SpawnPawn(self.args[0], int(self.args[1]), pc)
+            SpawnEnemy(self.args[0], int(self.args[1]), pc)
         else:
             SendToHost(self)
         return super().run_effect()
@@ -64,7 +64,7 @@ class SpawnEnemyDupeEffect(Effect):
             else:
                 pc = self.pc
 
-            SpawnPawn(self.args[0], self.quantity if self.quantity != None else 1, pc)
+            SpawnEnemy(self.args[0], self.quantity, pc)
         else:
             SendToHost(self)
         return super().run_effect()
@@ -76,17 +76,13 @@ class GiveCurrencyEffect(Effect):
     def run_effect(self, response = "Success", respond = True):
         if AmIHost():
             if self.args[0] == "Eridium":
-                currency = 1
+                currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Eridium.InventoryCategory_Eridium")
             elif self.args[0] == "Cash":
-                currency = 0
-            elif self.args[0] == "SeraphCrystal":
-                currency = 2
-            elif self.args[0] == "TorgueToken":
-                currency = 4
+                currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money")
             else:
-                currency = 0 #default to money ig
+                currency = find_object("InventoryCategoryData", "/Game/Gear/_Shared/_Design/InventoryCategories/InventoryCategory_Money.InventoryCategory_Money") #default to money ig
 
-            self.pc.PlayerReplicationInfo.Currency[currency].CurrentAmount += int(self.args[1])
+            self.pc.ServerAddCurrency(int(self.args[1]), currency)
             self.display_name = f"Gave {str(self.args[1])} {str(self.args[0])}"
         else:
             SendToHost(self)
@@ -101,31 +97,29 @@ class HypeTrain(Effect):
     effect_name = "event-hype-train"
     display_name = "Hype Train"
 
-    possible_enemies = [
-        "captainflynt",
-        "cassius",
-        "wilhelm",
-        "knuckledragger",
-        "steve",
-        "savagelee",
-        "madmike",
-        "sonofmothrakk",
-        "kingmong",
-        "tumbaa",
-    ]
+    possible_enemies = ["Badass CryptoSec Commando", 
+                        "The Holy Dumptruck", 
+                        "Badass Psycho", 
+                        "Badass Jabber", 
+                        "Badass Wardog", 
+                        "Badass Major",
+                        "Badass Loader",
+                        "Super Badass Marauder",
+                        "Dark Badass NOG",
+                        "Elite Badass Ratch"]
     
     def keep_track_of_friendlies(self, obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
         global used_names, buddy_watch_running, spawned_friendlies
         if str(obj) in spawned_friendlies:
             spawned_friendlies.remove(str(obj))
             try:
-                used_names.remove(str(obj.BalanceDefinitionState.AIPawnBalanceDefinition.PlayThroughs[0].DisplayName))
+                used_names.remove(str(obj.TargetableComponent.TargetUIName.DisplayName))
             except:
                 pass
         if len(spawned_friendlies) == 0:
             used_names = []
             #print("stopping hype train hook")
-            remove_hook("Engine.Pawn:UnPossessed", Type.PRE, "keep_track_of_friendlies_hook")
+            remove_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "keep_track_of_friendlies_hook")
             buddy_watch_running = False
         return None
 
@@ -144,37 +138,53 @@ class HypeTrain(Effect):
 
             possible_names.append(self.sourcedetails["last_contribution"]["user_name"])
 
-            final_name = ""
-
-            name_found: bool = False
-            all_names_used: bool = False
-            i = 0
-            while not name_found and not all_names_used:
-                picked_name = possible_names[i]
-                if picked_name in used_names:
-                    i += 1
-                    if i > len(possible_names):
-                        
-                        all_names_used = True
-                        final_name = possible_names[random.randint(0, len(possible_names) - 1)]
-                else:
-                    final_name = picked_name
-                    used_names.append(picked_name)
-                    name_found = True
-
             try:
-                enemy = self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)]
-                print(f"Spawning {enemy}")
-                actor = SpawnPawn(enemy, 1, self.pc, final_name, True, 10)
-                print(actor)
-                if actor[0] == None:
+                actor = SpawnEnemyEx(self.possible_enemies[random.randint(0, len(self.possible_enemies) - 1)], 1, self.pc, True)
+                if actor == None:
                     return super().run_effect("Failed", respond)
-                
-                spawned_friendlies.append(str(actor[0]))
+                #print(actor)
+                spawned_friendlies.append(str(actor))
 
-                
+                actor.AIBalanceState.SetGameStage(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel + 5)
+                actor.AIBalanceState.SetExperienceLevel(GetPlayerCharacter(self.pc).PlayerBalanceComponent.ExperienceLevel + 5)
+
+                try:
+                    actor.DamageCauserComponent.DamageDealtMultiplier.Value = 2.0
+                    actor.DamageCauserComponent.DamageDealtMultiplier.BaseValue = 2.0
+                    actor.DamageCauserComponent.StatusEffectDamageModifierScalar.Value = 2.0
+                    actor.DamageCauserComponent.StatusEffectDamageModifierScalar.BaseValue = 2.0
+                except:
+                    pass
+
+                try:
+                    actor.OakDamageCauserComponent.DamageDealtMultiplier.Value = 2.0
+                    actor.OakDamageCauserComponent.DamageDealtMultiplier.BaseValue = 2.0
+                    actor.OakDamageCauserComponent.StatusEffectDamageModifierScalar.Value = 2.0
+                    actor.OakDamageCauserComponent.StatusEffectDamageModifierScalar.BaseValue = 2.0
+                except:
+                    pass
+
+                name = construct_object("GbxUIName", outer=ENGINE.Outer)
+
+                name_found: bool = False
+                all_names_used: bool = False
+                i = 0
+                while not name_found and not all_names_used:
+                    picked_name = possible_names[i]
+                    if picked_name in used_names:
+                        i += 1
+                        if i > len(possible_names):
+                            #print("all names have been used")
+                            all_names_used = True
+                            name.DisplayName = possible_names[random.randint(0, len(possible_names) - 1)]
+                    else:
+                        name.DisplayName = picked_name
+                        used_names.append(picked_name)
+                        name_found = True
+
+                actor.SetCharacterUIName(name)
                 if buddy_watch_running == False:
-                    add_hook("Engine.Pawn:UnPossessed", Type.PRE, "keep_track_of_friendlies_hook", self.keep_track_of_friendlies)
+                    add_hook("/Script/Engine.Pawn:ReceiveUnpossessed", Type.PRE, "keep_track_of_friendlies_hook", self.keep_track_of_friendlies)
                     buddy_watch_running = True
 
             except:

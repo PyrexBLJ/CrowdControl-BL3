@@ -12,7 +12,7 @@ effect_instances = set()
 
 
 def SetEffectStatus(code, status, pc:UObject):
-    if pc.PlayerReplicationInfo.bIsPartyLeader:
+    if pc.PlayerState == ENGINE.GameViewport.World.GameState.HostPlayerState:
         message = {"id": 0, "code": code, "status": status, "type": 1}
         try:
             from . import client_socket
@@ -25,14 +25,14 @@ def SetEffectStatus(code, status, pc:UObject):
         except Exception as e:
             print(f"CrowdControl: Failed to send status reponse: {e}")
     else:
-        pc.ClientMessage(f"{code}-{status}", "CCEffectStatus", float(pc.PlayerReplicationInfo.PlayerID))
+        pc.ClientMessage(f"{code}-{status}", "CCEffectStatus", float(pc.PlayerState.PlayerID))
     return
 
 
 def NotifyEffect(eid, status=None, code=None, pc=None, timeRemaining=None):
 
     if pc != get_pc():
-        pc.ClientMessage(f"{eid}-{status}-{code}", "CrowdControl", float(pc.PlayerReplicationInfo.PlayerID))
+        pc.ClientMessage(f"{eid}-{status}-{code}", "CrowdControl", float(pc.PlayerState.PlayerID))
         return
 
     if status is None:

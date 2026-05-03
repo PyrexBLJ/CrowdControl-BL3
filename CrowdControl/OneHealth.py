@@ -11,12 +11,9 @@ class SetOneHP(Effect):
     display_name = "One Health"
     def run_effect(self):
         if AmIHost(): # if we are host just do the effect normally, otherwise we have to ask the host to do it for us
-            for pool in self.pc.ResourcePoolManager.ResourcePools:
-                if pool != None:
-                    if pool.Class.Name == "ShieldResourcePool":
-                        pool.SetCurrentValue(0)
-                    if pool.Class.Name == "HealthResourcePool":
-                        pool.SetCurrentValue(1)
+            GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentShield(0)
+            GetPlayerCharacter(self.pc).OakDamageComponent.SetCurrentHealth(1)
+            #self.pc.DisplayRolloutNotification("Crowd Control", "Dont die", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
         else:
             SendToHost(self)
         return super().run_effect()

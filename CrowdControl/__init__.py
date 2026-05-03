@@ -7,7 +7,7 @@ from mods_base import build_mod, hook, ButtonOption, DropdownOption #type: ignor
 from unrealsdk.unreal import BoundFunction, UObject, WrappedStruct #type: ignore
 from unrealsdk.hooks import Type #type: ignore
 from typing import Any
-from .Utils import AmIHost, CrowdControl_PawnList_Unpossessed, CrowdControl_PawnList_Possessed
+from .Utils import AmIHost, CrowdControl_PawnList_Possessed, CrowdControl_PawnList_Unpossessed
 from .Comms import *
 from .Effect import *
 from .OneHealth import *
@@ -55,7 +55,7 @@ def connect_socket(host, port):
         connecting = False
 
 
-@hook("WillowGame.WillowGameViewportClient:Tick", Type.PRE)
+@hook("/Script/Engine.Actor:ReceiveTick", Type.PRE)
 def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction,) -> Any:
     global shutdown, do_reset, wait_ticks, client_socket, buffer, connecting
 
@@ -98,11 +98,11 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                     continue
 
                 if message["type"] != 253:
-                    if str(ENGINE.GetCurrentWorldInfo().GetStreamingPersistentMapName().lower()) in ["menumap", "loader", "exampleentry"]:
+                    if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'", "Level'/Game/Maps/MenuMap/Loader.Loader:PersistentLevel'"]:
                         NotifyEffect(message["id"], "Retry", message["code"], get_pc())
                         print("Crowd Control: Effect redeemed when it was not possible to activate, retrying.")
                         return
-                    elif get_pc().bStatusMenuOpen or get_pc().IsPauseMenuOpen():
+                    elif get_pc().IsInMenu():
                         NotifyEffect(message["id"], "Retry", message["code"], get_pc())
                         print("Crowd Control: Effect redeemed while in a menu, retrying.")
                         return
@@ -140,7 +140,7 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
 
 
 
-@hook("Engine.PlayerController:ServerSpeech", Type.PRE)
+@hook("/Script/Engine.PlayerController:ServerChangeName", Type.PRE)
 def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
 #
 #   This is where requests for effects will arrive to the host from the other clients in the game.
@@ -154,15 +154,15 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
 #
 #   you can see an example of this being called in the OneHealth effect
 #
-    if "CrowdControl" in args.Type:
-        trimmedrequest: str = args.Callsign
+    if "CrowdControl-" in args.S:
+        trimmedrequest: str = args.S
         trimmedrequest = trimmedrequest.removeprefix("CrowdControl-")
         b64request: list = trimmedrequest.split("-")
         request = json.loads(base64.b64decode(b64request[1]).decode("utf-8"))
         request["pc"] = obj
         request["from_client"] = True
-        # get_pc().PlayerReplicationInfo.PlayerID
-        if str(get_pc().PlayerReplicationInfo.PlayerID) == str(obj.PlayerReplicationInfo.PlayerID):
+
+        if str(get_pc().PlayerState.PlayerID) == str(obj.PlayerState.PlayerID):
             #print("Got a client request from ourself, discard it.")
             return None
         
@@ -186,7 +186,7 @@ def ServerChangeNameHook(obj: UObject, args: WrappedStruct, ret: Any, func: Boun
 
     return None
 
-@hook("WillowGame.WillowPlayerController:ClientMessage", Type.PRE)
+@hook("/Script/Engine.PlayerController:ClientMessage", Type.PRE)
 def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFunction) -> None:
 #
 #   This is where players will get responses from the host
@@ -194,7 +194,7 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
 #   As im writing this i dont think we will really much more than this, def will have to handle timed events somehow but im not sure yet
 #
     if args.type == "CrowdControl":
-        if args.MsgLifeTime != float(get_pc().PlayerReplicationInfo.PlayerID) or AmIHost():
+        if args.MsgLifeTime != float(get_pc().PlayerState.PlayerID) or AmIHost():
             return None
         
         response: list = args.S.split("-")
@@ -218,16 +218,30 @@ def ClientMessageHook(obj: UObject, args: WrappedStruct, ret: Any, func: BoundFu
     return None
 
 
-@hook("WillowGame.WillowGameInfo:TeleportToFinalDestinationAfterLoad", Type.POST)
+@hook("/Script/Engine.PlayerController:ServerNotifyLoadedWorld", Type.POST)
 def CrowdControlLoadedMap(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
+    NewMap = str(args.WorldPackageName)
+    if "loader" in NewMap.lower() or "fakeentry" in NewMap.lower():
+        return
+    
     global effect_instances
     for inst in effect_instances:
         if inst.is_running:
             inst.on_map_change()
+
+    CrowdControlFinishedDim.enable()
+
+
+@hook("/Script/OakGame.GFxExperienceBar:extFinishedDim", Type.POST)
+def CrowdControlFinishedDim(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
+    global effect_instances
+    for inst in effect_instances:
+        if inst.is_running:
             inst.map_change_finalized()
+    CrowdControlFinishedDim.disable()
 
 
-@hook("WillowGame.WillowGameViewportClient:Tick", Type.PRE, hook_identifier="MainCCDrawHUDHook") #/Script/Engine.HUD:ReceiveDrawHUD
+@hook("/Script/Engine.Actor:ReceiveTick", Type.PRE, hook_identifier="MainCCDrawHUDHook") #/Script/Engine.HUD:ReceiveDrawHUD
 def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction,) -> Any:
     global effect_instances
     effects_to_remove: list = []
@@ -239,88 +253,6 @@ def CrowdControlDrawHUD(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFun
                 inst.stop_effect()
     for e in effects_to_remove:
         effect_instances.remove(e)
-
-@hook("Engine.PlayerController:SetLobbyShown", Type.POST)
-def CheckInstalledDLCs(obj: UObject,args: WrappedStruct,ret: Any,func: BoundFunction) -> None:
-    cm = ENGINE.GetDLCManager()
-    AsterResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Aster"))
-    print(f"Aster Installed: {AsterResult}")
-    if not AsterResult: # disable the effects spawning stuff from dlcs that arent installed
-        SetEffectStatus("spawn-enemy_warlordgrug", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_warlordslog", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_warlordturge", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_spiderpants", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_mrboneypantsguy", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_skeletonking", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_bluedragon", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_reddragon", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_greendragon", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_purpledragon", 0x83, get_pc())
-
-    AnemoneResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Anemone"))
-    print(f"Anemone Installed: {AnemoneResult}")
-    if not AnemoneResult:
-        SetEffectStatus("spawn-enemy_ltbolson", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_ltangvar", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_lthoffman", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_lttetra", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_hector", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_cassius", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_uranus", 0x83, get_pc())
-
-    IrisResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Iris"))
-    print(f"Iris Installed: {IrisResult}")
-    if not IrisResult:
-        SetEffectStatus("spawn-enemy_sullythestabber", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_blimp", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_motormama", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_piston", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_pyropete", 0x83, get_pc())
-
-    OrchidResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Orchid"))
-    print(f"Orchid Installed: {OrchidResult}")
-    if not OrchidResult:
-        SetEffectStatus("spawn-enemy_nobeard", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_roscoe", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_herle", 0x83, get_pc())
-
-    FlaxResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Flax"))
-    print(f"Flax Installed: {FlaxResult}")
-    if not FlaxResult:
-        SetEffectStatus("spawn-enemy_clark", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_sullytheblacksmith", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_pumpkinkingpin", 0x83, get_pc())
-        SetEffectStatus("spawn_candy", 0x83, get_pc())
-        SetEffectStatus("spawn_wisps", 0x83, get_pc())
-
-    AlliumResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Allium"))
-    print(f"Allium Installed: {AlliumResult}")
-    if not AlliumResult:
-        SetEffectStatus("spawn-enemy_tindersnowflake", 0x83, get_pc())
-
-    LobeliaResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Lobelia"))
-    print(f"Lobelia Installed: {LobeliaResult}")
-    if not LobeliaResult:
-        SetEffectStatus("spawn-enemy_omgwth", 0x83, get_pc())
-
-    SageResult = cm.IsPackageFullyInstalled(cm.GetDownloadablePackageDefinitionFromDLCName("Sage"))
-    print(f"Sage Installed: {SageResult}")
-    if not SageResult:
-        SetEffectStatus("spawn-enemy_arizona", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_bulstoss", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_rouge", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_dermonstrositat", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_rakkanoth", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_dribbles", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_bloodtail", 0x83, get_pc())
-        SetEffectStatus("spawn-enemy_dexi", 0x83, get_pc())
-
-    if not AsterResult or not IrisResult:
-        SetEffectStatus("gamba_time", 0x83, get_pc())
-
-    CheckInstalledDLCs.disable()
-
-    return None
 
 
 build_mod()

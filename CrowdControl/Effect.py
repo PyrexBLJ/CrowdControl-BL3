@@ -2,7 +2,6 @@ from mods_base import ENGINE, get_pc #type: ignore
 from unrealsdk.unreal import UObject #type: ignore
 from .Comms import NotifyEffect, effect_instances
 import time
-import unrealsdk
 
 
 class Effect:
@@ -32,11 +31,8 @@ class Effect:
 
     def run_effect(self, response:str = "Success", respond:bool = True):
         #print(f"running effect {self.effect_name} with id {self.id}. the current args are {self.args} and its duration is {self.duration}")
-        hud = self.pc.GetHUDMovie()
-        if hud != None:
-            hud.ClearTrainingText()
-            hud.AddTrainingText(f"{self.display_name}", "Crowd Control", 3.5 * ENGINE.GetCurrentWorldInfo().TimeDilation, unrealsdk.make_struct("Color"), "", False, 0, self.pc.PlayerReplicationInfo, True, 0)
-        if not get_pc().PlayerReplicationInfo.bIsPartyLeader:
+        self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
+        if not get_pc().PlayerState == ENGINE.GameViewport.World.GameState.HostPlayerState:
             respond = False
         if self.duration:
             Effect.running_effects.append(self.effect_name)
@@ -54,15 +50,12 @@ class Effect:
     def stop_effect(self, response: str = "Finished", respond:bool = True): #available responses: https://developer.crowdcontrol.live/sdk/simpletcp/structure.html#effect-instance-messages
         self.is_running = False
         Effect.running_effects.remove(self.effect_name)
-        if not get_pc().PlayerReplicationInfo.bIsPartyLeader:
+        if not get_pc().PlayerState == ENGINE.GameViewport.World.GameState.HostPlayerState:
             respond = False
         if respond:
             NotifyEffect(self.id, response, self.effect_name, self.pc)
         if self.duration:
-            hud = self.pc.GetHUDMovie()
-            if hud != None:
-                hud.ClearTrainingText()
-                hud.AddTrainingText(f"{self.display_name}", "Crowd Control", 3.5 * ENGINE.GetCurrentWorldInfo().TimeDilation, unrealsdk.make_struct("Color"), "", False, 0, self.pc.PlayerReplicationInfo, True, 0)
+            self.pc.DisplayRolloutNotification("Crowd Control", f"{self.display_name}", 3.5 * ENGINE.GameViewport.World.PersistentLevel.WorldSettings.TimeDilation)
 
 
     def on_map_change(self):
