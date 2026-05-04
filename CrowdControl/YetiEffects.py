@@ -20,8 +20,9 @@ class OopsAllPsychos(Effect):
         for factory in find_all("SpawnerComponent",False):
             if "Default" in str(factory) or not factory.Spawner:
                 continue
-            if not factory.Spawner.GetSpawnerTeamComponent().EvaluatedTeam in blacklist_teams and factory.GbxSpawner.Class.Name != "OakMissionSpawner":
-                factory.SetSpawnOptions(psychos)
+            if factory.Spawner.GetSpawnerTeamComponent() != None:
+                if not factory.Spawner.GetSpawnerTeamComponent().EvaluatedTeam in blacklist_teams and factory.GbxSpawner.Class.Name != "OakMissionSpawner":
+                    factory.SetSpawnOptions(psychos)
 
 
     def oops_psychos_dim(self, obj: UObject, args: WrappedStruct,ret: Any, func: BoundFunction) -> Any:
