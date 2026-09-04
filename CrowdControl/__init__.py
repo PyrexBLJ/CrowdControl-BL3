@@ -22,6 +22,14 @@ __all__ = ["Load", "RequestEffect", "NotifyEffect", "Internal"]
 Shared = None
 
 TIMEOUT = 15
+MOD_VERSION = "1.0.6"  # keep in sync with pyproject.toml
+
+# SimpleTCP request types the CC app can send us
+REQ_EFFECT_TEST = 0
+REQ_EFFECT_START = 1
+REQ_EFFECT_STOP = 2
+REQ_VERSION = 0xFC
+REQ_GAME_UPDATE = 0xFD
 
 client = None
 
@@ -97,36 +105,64 @@ def CrowdControlSocket(obj: UObject, args: WrappedStruct, ret: Any, func: BoundF
                     #print(f"CrowdControl: JSON parse error: {e}\n{message_bytes}")
                     continue
 
-                if message["type"] != 253:
-                    if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'", "Level'/Game/Maps/MenuMap/Loader.Loader:PersistentLevel'"]:
-                        NotifyEffect(message["id"], "Retry", message["code"], get_pc())
-                        print("Crowd Control: Effect redeemed when it was not possible to activate, retrying.")
-                        return
-                    elif get_pc().IsInMenu():
-                        NotifyEffect(message["id"], "Retry", message["code"], get_pc())
-                        print("Crowd Control: Effect redeemed while in a menu, retrying.")
-                        return
+                mtype = message.get("type")
 
-                    eid = message["id"]
-                    effect = message["code"]
-                    viewer = message.get("viewer", "None")
-                    viewers = message.get("viewers", None)
-                    sourcedetails = message.get("sourceDetails", None)
-                    duration = message.get("duration", None)
-                    parameters = message.get("parameters", None)
-                    quantity = message.get("quantity", None)
+                if mtype == REQ_VERSION:
+                    reply = {"id": message.get("id", 0), "type": REQ_VERSION, "version": MOD_VERSION}
+                    client_socket.send(json.dumps(reply).encode("utf-8") + b"\x00")
+                    continue
 
-                    if duration:
-                        duration /= 1000
+                if mtype == REQ_GAME_UPDATE:
+                    continue
 
-                    if duration and parameters:
-                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity, args=parameters)
-                    elif parameters:
-                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, args=parameters, quant=quantity)
-                    elif duration:
-                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity)
-                    else:
-                        RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, quant=quantity)
+                if mtype not in (REQ_EFFECT_TEST, REQ_EFFECT_START, REQ_EFFECT_STOP) or "id" not in message:
+                    # keepalive / player info / login / anything new - never let it kill the socket
+                    print(f"CrowdControl: Ignoring message type {mtype}: {message_bytes[:200]!r}")
+                    continue
+
+                if mtype == REQ_EFFECT_STOP:
+                    # code is None for "stop everything", otherwise stop that effect
+                    stop_code = message.get("code")
+                    for inst in list(effect_instances):
+                        if inst.is_running and (stop_code is None or inst.effect_name == stop_code):
+                            inst.stop_effect()
+                            effect_instances.discard(inst)
+                    NotifyEffect(message["id"], "Success", stop_code, get_pc())
+                    continue
+
+                if "code" not in message or message["code"] is None:
+                    print(f"CrowdControl: Effect request without a code: {message_bytes[:200]!r}")
+                    continue
+
+                if str(ENGINE.GameViewport.World.CurrentLevel) in ["Level'/Game/Maps/MenuMap/MenuMap_P.MenuMap_P:PersistentLevel'", "Level'/Game/Maps/MenuMap/Loader.Loader:PersistentLevel'"]:
+                    NotifyEffect(message["id"], "Retry", message["code"], get_pc())
+                    print("Crowd Control: Effect redeemed when it was not possible to activate, retrying.")
+                    return
+                elif get_pc().IsInMenu():
+                    NotifyEffect(message["id"], "Retry", message["code"], get_pc())
+                    print("Crowd Control: Effect redeemed while in a menu, retrying.")
+                    return
+
+                eid = message["id"]
+                effect = message["code"]
+                viewer = message.get("viewer", "None")
+                viewers = message.get("viewers", None)
+                sourcedetails = message.get("sourceDetails", None)
+                duration = message.get("duration", None)
+                parameters = message.get("parameters", None)
+                quantity = message.get("quantity", None)
+
+                if duration:
+                    duration /= 1000
+
+                if duration and parameters:
+                    RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity, args=parameters)
+                elif parameters:
+                    RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, args=parameters, quant=quantity)
+                elif duration:
+                    RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=duration, quant=quantity)
+                else:
+                    RequestEffect(eid=eid, effect_name=effect, pc=get_pc(), viewer=viewer, viewers=viewers, source=sourcedetails, duration=0, quant=quantity)
 
     except Exception as e:
         print(f"CrowdControl Socket Error: {e}")
