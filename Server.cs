@@ -1,4 +1,5 @@
-﻿using ConnectorLib.SimpleTCP;
+﻿using ConnectorLib.JSON;
+using ConnectorLib.SimpleTCP;
 using CrowdControl.Common;
 using ConnectorType = CrowdControl.Common.ConnectorType;
 
@@ -19,6 +20,22 @@ public class Borderlands3 : SimpleTCPPack<SimpleTCPServerConnector>
     public override ushort Port => 42069; // pick something within 1024~49151
 
     public override ISimplePipelinePack.AuthenticationType AuthenticationMode => ISimplePipelinePack.AuthenticationType.None;
+
+    // The BL3 mod only understands effect requests (test/start/stop) and GameUpdate (0xFD).
+    // Every other control message the client sends has no "code" field and makes the mod
+    // throw KeyError('code'), drop the socket and reconnect in a loop. In particular the
+    // client now sends a Version (0xFC) request the moment the game connects, so that
+    // message must never reach the mod.
+    public override HashSet<RequestType>? OmittedRequestTypes =>
+    [
+        RequestType.Version,
+        RequestType.PlayerInfo,
+        RequestType.KeepAlive,
+        RequestType.Login,
+        RequestType.DataRequest,
+        RequestType.GenericEvent,
+        RequestType.RpcResponse
+    ];
 
     public override EffectList Effects => new Effect[]
     {
